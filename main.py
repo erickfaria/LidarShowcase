@@ -2,8 +2,10 @@ import os
 import argparse
 import sys
 import subprocess
-from downloader import download_files_parallel
-from processor import LazProcessor, ensure_lazrs_installed
+
+# Importar do novo pacote lidar
+from lidar.downloader import download_files_parallel
+from lidar.processor import LazProcessor, ensure_lazrs_installed
 
 def check_dependencies():
     """Verificar e instalar dependências necessárias"""

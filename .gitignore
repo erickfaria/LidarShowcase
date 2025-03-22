@@ -1,3 +1,26 @@
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribuição / empacotamento
+dist/
+build/
+*.egg-info/
+
+# Ambientes virtuais
+venv/
+env/
+.env/
+
+# Dados
+data/
 *.laz
-*.pyc
 *.las
+
+# IDEs
+.vscode/
+.idea/
+
+# Logs
+*.log
