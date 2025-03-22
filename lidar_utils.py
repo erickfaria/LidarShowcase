@@ -337,6 +337,66 @@ class LidarVisualization:
         for c in unique_classes:
             percentage = (class_counts[c] / len(las_data.classification)) * 100
             print(f"  Classe {c} - {class_names.get(c, 'Desconhecido')}: {class_counts[c]:,} pontos ({percentage:.2f}%)")
+    
+    @staticmethod
+    def plot_points_by_class(las_data, class_value, max_points=None, point_size=0.5, title=None):
+        """
+        Visualiza pontos com uma classe específica ou lista de classes.
+        
+        Args:
+            las_data: Dados LAS carregados
+            class_value: Valor inteiro da classe ou lista de valores de classe a serem visualizados
+            max_points: Número máximo de pontos a serem plotados (para melhor desempenho)
+            point_size: Tamanho dos pontos no gráfico
+            title: Título personalizado para o gráfico
+        """
+        # Verificar se class_value é uma lista ou um valor único
+        if not isinstance(class_value, list):
+            class_value = [class_value]
+        
+        # Criar máscara para pontos das classes desejadas
+        class_mask = np.isin(las_data.classification, class_value)
+        
+        # Filtrar pontos
+        x = las_data.x[class_mask]
+        y = las_data.y[class_mask]
+        z = las_data.z[class_mask]
+        
+        # Limitar o número de pontos se necessário
+        if max_points and len(x) > max_points:
+            idx = np.random.choice(len(x), max_points, replace=False)
+            x = x[idx]
+            y = y[idx]
+            z = z[idx]
+        
+        # Criar visualização
+        fig, ax = plt.subplots(figsize=(10, 8))
+        
+        # Definir título do gráfico
+        if title:
+            plot_title = title
+        elif len(class_value) == 1:
+            plot_title = f"Pontos da Classe {class_value[0]}"
+        else:
+            plot_title = f"Pontos das Classes {', '.join(map(str, class_value))}"
+        
+        # Criar scatter plot com cores baseadas na elevação
+        scatter = ax.scatter(x, y, c=z, s=point_size, cmap='viridis', alpha=0.7)
+        
+        # Adicionar barra de cores e legendas
+        cbar = plt.colorbar(scatter, ax=ax)
+        cbar.set_label('Elevação (m)')
+        
+        ax.set_title(plot_title)
+        ax.set_xlabel('Coordenada X')
+        ax.set_ylabel('Coordenada Y')
+        ax.set_aspect('equal')
+        
+        plt.tight_layout()
+        plt.show()
+        
+        # Retornar os pontos filtrados
+        return x, y, z
 
 
 class LidarProcessing:
@@ -441,111 +501,155 @@ class LidarProcessing:
         }
     
     @staticmethod
-    def visualize_dtm(dtm_data):
-        """Visualiza um MDT como imagem colorida e superfície 3D."""
-        if not dtm_data:
-            return
+    def create_interpolated_dtm(las_data, resolution=1.0, method='linear'):
+        """
+        Cria um Modelo Digital de Terreno (MDT) interpolado a partir dos pontos de solo.
         
-        elevation_grid = dtm_data['elevation_grid']
-        xx = dtm_data['xx']
-        yy = dtm_data['yy']
-        x_grid = dtm_data['x_grid']
-        y_grid = dtm_data['y_grid']
-        extent = dtm_data['extent']
+        Parâmetros:
+            las_data (laspy.LasData): Dados LiDAR
+            resolution (float): Resolução do MDT em metros
+            method (str): Método de interpolação ('linear', 'cubic', 'nearest')
         
-        # Visualizar MDT como imagem
+        Retorna:
+            dict: Dicionário contendo os dados do MDT, incluindo:
+                - grid_x, grid_y: Coordenadas da grade
+                - dem: Matriz de elevação
+                - resolution: Resolução usada
+                - bounds: Limites da área
+        """
+        import numpy as np
+        from scipy.interpolate import griddata
+        
+        # Filtrar apenas pontos classificados como solo (classe 2)
+        if hasattr(las_data, 'classification'):
+            ground_mask = las_data.classification == 2
+            if np.sum(ground_mask) == 0:
+                print("Aviso: Nenhum ponto classificado como solo encontrado. Usando todos os pontos.")
+                ground_mask = np.ones_like(las_data.classification, dtype=bool)
+        else:
+            print("Aviso: Classificação não disponível. Usando todos os pontos.")
+            ground_mask = np.ones(len(las_data.x), dtype=bool)
+        
+        # Extrair pontos de solo
+        x = las_data.x[ground_mask]
+        y = las_data.y[ground_mask]
+        z = las_data.z[ground_mask]
+        
+        # Verificar se há pontos suficientes
+        if len(x) < 3:
+            raise ValueError("Não há pontos suficientes para criar um MDT.")
+        
+        # Calcular limites da área
+        x_min, x_max = np.min(x), np.max(x)
+        y_min, y_max = np.min(y), np.max(y)
+        
+        # Criar grade regular
+        grid_x = np.arange(x_min, x_max + resolution, resolution)
+        grid_y = np.arange(y_min, y_max + resolution, resolution)
+        mesh_x, mesh_y = np.meshgrid(grid_x, grid_y)
+        
+        # Realizar interpolação
+        points = np.column_stack((x, y))
+        grid_z = griddata(points, z, (mesh_x, mesh_y), method=method)
+        
+        # Preencher valores nulos (pode ocorrer com cubic)
+        if method == 'cubic':
+            mask = np.isnan(grid_z)
+            if np.any(mask):
+                grid_z[mask] = griddata(points, z, (mesh_x[mask], mesh_y[mask]), method='nearest')
+        
+        # Criar dicionário de saída com os dados processados
+        dtm_data = {
+            'grid_x': grid_x,
+            'grid_y': grid_y,
+            'dem': grid_z,
+            'resolution': resolution,
+            'bounds': (x_min, x_max, y_min, y_max)
+        }
+        
+        return dtm_data
+    
+    @staticmethod
+    def visualize_enhanced_dtm(dtm_data, cmap='terrain', alpha=0.8):
+        """
+        Visualiza um MDT com realce de relevo (hillshade).
+        
+        Parâmetros:
+            dtm_data (dict): Dicionário contendo os dados do MDT
+            cmap (str): Mapa de cores para visualização
+            alpha (float): Transparência do MDT sobre o hillshade
+        """
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from matplotlib.colors import LightSource
+        
+        # Extrair dados do dicionário
+        grid_x = dtm_data['grid_x']
+        grid_y = dtm_data['grid_y']
+        dem = dtm_data['dem']
+        
+        # Criar fonte de luz para hillshade
+        ls = LightSource(azdeg=315, altdeg=45)
+        
+        # Calcular hillshade
+        hillshade = ls.hillshade(dem, vert_exag=3)
+        
+        # Configurar figura
         plt.figure(figsize=(12, 10))
-        plt.imshow(elevation_grid, cmap='terrain', extent=extent, origin='lower')
-        plt.colorbar(label='Elevação (m)')
-        plt.title('Modelo Digital de Terreno (MDT) Simplificado')
-        plt.xlabel('X')
-        plt.ylabel('Y')
-        plt.grid(False)
-        plt.show()
         
-        # Visualização 3D do MDT
-        fig = plt.figure(figsize=(12, 10))
-        ax = fig.add_subplot(111, projection='3d')
+        # Renderizar hillshade com MDT colorido
+        rgb = ls.blend_overlay(hillshade, dem, cmap=cmap)
+        plt.imshow(rgb, extent=[grid_x.min(), grid_x.max(), grid_y.min(), grid_y.max()], 
+                   origin='lower', aspect='equal')
         
-        # Mascarar valores NaN para visualização
-        masked_elevation = np.ma.masked_invalid(elevation_grid)
+        # Adicionar barra de cores
+        cbar = plt.colorbar(label='Elevação (m)')
+        cbar.ax.tick_params(labelsize=8)
         
-        # Reduzir a resolução para visualização mais rápida
-        stride = max(1, int(len(x_grid)/100))
-        surf = ax.plot_surface(xx[::stride, ::stride], yy[::stride, ::stride], masked_elevation[::stride, ::stride], 
-                              cmap='terrain', linewidth=0, antialiased=True, alpha=0.8)
-        
-        ax.set_title('Visualização 3D do MDT')
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Elevação (m)')
-        fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5, label='Elevação (m)')
+        plt.title('Modelo Digital de Terreno com Realce de Relevo')
+        plt.xlabel('Coordenada X (m)')
+        plt.ylabel('Coordenada Y (m)')
+        plt.grid(alpha=0.3)
         plt.tight_layout()
         plt.show()
     
     @staticmethod
-    def segment_by_height(las_data, max_points=500000):
-        """Segmenta a nuvem de pontos por faixas de altura."""
-        if las_data is None:
-            return
+    def visualize_slope(dtm_data, cmap='viridis'):
+        """
+        Visualiza o mapa de declividade derivado do MDT.
         
-        # Definir faixas de altura (relativa ao solo ou valores absolutos)
-        if hasattr(las_data, 'classification') and 2 in np.unique(las_data.classification):
-            # Se tivermos pontos de solo, podemos calcular alturas relativas
-            # Esta é uma abordagem simplificada - em projetos reais, seria melhor usar um MDT interpolado
-            ground_mask = las_data.classification == 2
-            ground_z = np.mean(las_data.z[ground_mask])  # Média como simplificação
-            relative_heights = las_data.z - ground_z
-            print(f"Altura média do solo: {ground_z:.2f} m")
-            height_description = "relativa ao solo"
-        else:
-            # Sem classificação de solo, usar valores absolutos
-            relative_heights = las_data.z
-            height_description = "absoluta"
+        Parâmetros:
+            dtm_data (dict): Dicionário contendo os dados do MDT
+            cmap (str): Mapa de cores para visualização
+        """
+        import numpy as np
+        import matplotlib.pyplot as plt
         
-        # Definir categorias de altura
-        height_bins = [
-            (-np.inf, 0.5, "Solo/Estruturas baixas"),
-            (0.5, 2.0, "Vegetação baixa / Arbustos"),
-            (2.0, 10.0, "Vegetação média / Árvores pequenas"),
-            (10.0, np.inf, "Vegetação alta / Árvores grandes")
-        ]
+        # Extrair dados do dicionário
+        grid_x = dtm_data['grid_x']
+        grid_y = dtm_data['grid_y']
+        dem = dtm_data['dem']
+        resolution = dtm_data['resolution']
         
-        # Criar máscaras para cada categoria
-        masks = []
-        for min_h, max_h, _ in height_bins:
-            masks.append((relative_heights >= min_h) & (relative_heights < max_h))
+        # Calcular gradientes
+        dy, dx = np.gradient(dem, resolution, resolution)
         
-        # Plotar cada categoria com cor diferente
+        # Calcular declividade em graus
+        slope = np.degrees(np.arctan(np.sqrt(dx**2 + dy**2)))
+        
+        # Plotar mapa de declividade
         plt.figure(figsize=(12, 10))
+        slope_img = plt.imshow(slope, cmap=cmap, extent=[grid_x.min(), grid_x.max(), 
+                                                        grid_y.min(), grid_y.max()], 
+                              origin='lower', aspect='equal')
         
-        # Amostragem para visualização mais rápida
-        sample_size = min(max_points, len(las_data.x))
-        sample_idx = np.random.choice(len(las_data.x), sample_size, replace=False)
+        # Adicionar barra de cores
+        cbar = plt.colorbar(slope_img, label='Declividade (graus)')
+        cbar.ax.tick_params(labelsize=8)
         
-        # Cores para cada categoria
-        colors = ['brown', 'green', 'lime', 'darkgreen']
-        
-        # Plotar cada categoria
-        for i, (mask, (_, _, label)) in enumerate(zip(masks, height_bins)):
-            mask_sample = mask[sample_idx]
-            if np.any(mask_sample):
-                plt.scatter(las_data.x[sample_idx][mask_sample], las_data.y[sample_idx][mask_sample], 
-                           c=colors[i], s=0.5, alpha=0.7, label=label)
-        
-        plt.title(f'Segmentação por Faixas de Altura ({height_description})')
-        plt.xlabel('X')
-        plt.ylabel('Y')
-        plt.axis('equal')
-        plt.grid(True, alpha=0.3)
-        plt.legend()
+        plt.title('Mapa de Declividade')
+        plt.xlabel('Coordenada X (m)')
+        plt.ylabel('Coordenada Y (m)')
+        plt.grid(alpha=0.3)
+        plt.tight_layout()
         plt.show()
-        
-        # Mostrar estatísticas de cada categoria
-        print("\nEstatísticas por categoria de altura:")
-        for i, ((min_h, max_h, label), mask) in enumerate(zip(height_bins, masks)):
-            count = np.sum(mask)
-            percentage = (count / len(las_data.x)) * 100
-            print(f"  {label} ({min_h if min_h != -np.inf else 'Mín'} a {max_h if max_h != np.inf else 'Máx'} m): {count:,} pontos ({percentage:.2f}%)")
-        
-        return masks, height_bins
