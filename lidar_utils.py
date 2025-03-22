@@ -602,15 +602,15 @@ class LidarProcessing:
         cmap_obj = cm.get_cmap(cmap)
         norm = plt.Normalize(dem.min(), dem.max())
         
-        # Colorir o MDT usando o mapa de cores
-        rgb = cmap_obj(norm(dem))
+        # Colorir o MDT usando o mapa de cores - apenas usar os canais RGB (sem alpha)
+        rgb = cmap_obj(norm(dem))[:,:,:3]  # Remover o canal alpha (4º canal)
         
-        # Aplicar o blend_overlay usando os dados já coloridos
+        # Aplicar o blend_overlay usando os dados já coloridos (agora com dimensões compatíveis)
         shaded_rgb = ls.blend_overlay(hillshade, rgb)
         
         # Renderizar a imagem
         plt.imshow(shaded_rgb, extent=[grid_x.min(), grid_x.max(), grid_y.min(), grid_y.max()], 
-                   origin='lower', aspect='equal')
+                origin='lower', aspect='equal')
         
         # Adicionar barra de cores
         sm = plt.cm.ScalarMappable(cmap=cmap_obj, norm=norm)
