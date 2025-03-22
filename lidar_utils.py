@@ -582,6 +582,7 @@ class LidarProcessing:
         import numpy as np
         import matplotlib.pyplot as plt
         from matplotlib.colors import LightSource
+        import matplotlib.cm as cm
         
         # Extrair dados do dicionário
         grid_x = dtm_data['grid_x']
@@ -597,13 +598,24 @@ class LidarProcessing:
         # Configurar figura
         plt.figure(figsize=(12, 10))
         
-        # Renderizar hillshade com MDT colorido
-        rgb = ls.blend_overlay(hillshade, dem, cmap=cmap)
-        plt.imshow(rgb, extent=[grid_x.min(), grid_x.max(), grid_y.min(), grid_y.max()], 
+        # Obter o mapa de cores e normalizar os dados
+        cmap_obj = cm.get_cmap(cmap)
+        norm = plt.Normalize(dem.min(), dem.max())
+        
+        # Colorir o MDT usando o mapa de cores
+        rgb = cmap_obj(norm(dem))
+        
+        # Aplicar o blend_overlay usando os dados já coloridos
+        shaded_rgb = ls.blend_overlay(hillshade, rgb)
+        
+        # Renderizar a imagem
+        plt.imshow(shaded_rgb, extent=[grid_x.min(), grid_x.max(), grid_y.min(), grid_y.max()], 
                    origin='lower', aspect='equal')
         
         # Adicionar barra de cores
-        cbar = plt.colorbar(label='Elevação (m)')
+        sm = plt.cm.ScalarMappable(cmap=cmap_obj, norm=norm)
+        sm.set_array([])  # Truque para evitar avisos
+        cbar = plt.colorbar(sm, label='Elevação (m)')
         cbar.ax.tick_params(labelsize=8)
         
         plt.title('Modelo Digital de Terreno com Realce de Relevo')
