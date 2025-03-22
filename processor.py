@@ -3,6 +3,27 @@ import laspy
 import concurrent.futures
 from tqdm import tqdm
 import argparse
+import subprocess
+import sys
+
+def ensure_lazrs_installed():
+    """Verifica e instala a biblioteca lazrs necessária para descompressão LAZ"""
+    try:
+        import lazrs
+        return True
+    except ImportError:
+        print("Instalando bibliotecas necessárias para descompressão LAZ...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "lazrs"])
+        try:
+            import lazrs
+            return True
+        except ImportError:
+            print("Falha ao instalar lazrs. Tentando pylas...")
+            try:
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "pylas"])
+                return True
+            except:
+                return False
 
 class LazProcessor:
     def __init__(self, data_dir):
@@ -27,6 +48,14 @@ class LazProcessor:
             base_name = os.path.basename(file_path)
             name_no_ext = os.path.splitext(base_name)[0]
             
+            # Configurar backend explicitamente (após a instalação de lazrs)
+            try:
+                import lazrs
+                laspy.LasReader.default_backend = 'lazrs'
+            except ImportError:
+                # Tentar com o modo alternativo
+                pass
+            
             # Read the LAZ file and convert to LAS
             with laspy.open(file_path) as f:
                 las = f.read()
@@ -50,10 +79,23 @@ class LazProcessor:
     
     def process_all_files(self, output_dir=None, workers=4):
         """Process all LAZ files using multiple workers"""
+        # Verificar dependências primeiro
+        if not ensure_lazrs_installed():
+            print("ERRO: Não foi possível instalar as dependências necessárias para descompressão LAZ.")
+            print("Tente instalar manualmente com: pip install lazrs pylas")
+            return []
+            
         files = self.get_laz_files()
+        if not files:
+            print("Nenhum arquivo LAZ encontrado no diretório:", self.data_dir)
+            return []
+            
         results = []
         
-        with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:
+        # Usar 1 worker para evitar problemas de concorrência com o backend LAZ
+        effective_workers = 1 if workers > 1 else workers
+        
+        with concurrent.futures.ProcessPoolExecutor(max_workers=effective_workers) as executor:
             futures = [executor.submit(self.process_file, f, output_dir) for f in files]
             
             # Process with progress bar

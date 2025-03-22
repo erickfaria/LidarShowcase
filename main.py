@@ -1,15 +1,35 @@
 import os
 import argparse
+import sys
+import subprocess
 from downloader import download_files_parallel
-from processor import LazProcessor
+from processor import LazProcessor, ensure_lazrs_installed
+
+def check_dependencies():
+    """Verificar e instalar dependências necessárias"""
+    required_packages = ["laspy", "tqdm", "requests"]
+    
+    print("Verificando dependências...")
+    for package in required_packages:
+        try:
+            __import__(package)
+        except ImportError:
+            print(f"Instalando {package}...")
+            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+    
+    # Verificar backend LAZ
+    ensure_lazrs_installed()
 
 def main():
+    # Verificar dependências primeiro
+    check_dependencies()
+    
     # Configurar argumentos
     parser = argparse.ArgumentParser(description="Baixar e converter arquivos LAZ para LAS")
     parser.add_argument("--input", "-i", help="Arquivo de texto contendo URLs, uma por linha")
     parser.add_argument("--output", "-o", default="./data", help="Pasta de saída para arquivos baixados e convertidos")
     parser.add_argument("--download-workers", "-dw", type=int, default=5, help="Número de downloads paralelos")
-    parser.add_argument("--process-workers", "-pw", type=int, default=4, help="Número de processos para conversão")
+    parser.add_argument("--process-workers", "-pw", type=int, default=1, help="Número de processos para conversão")
     parser.add_argument("--overwrite", action="store_true", help="Sobrescrever arquivos existentes")
     args = parser.parse_args()
     
@@ -23,9 +43,9 @@ def main():
     else:
         # URLs padrão
         urls = [
-            "https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/NE_Statewide_D23/NE_Statewide_3_D23/LAZ/USGS_LPC_NE_Statewide_D23_13T_GH_2362.laz",
-            "https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/NE_Statewide_D23/NE_Statewide_3_D23/LAZ/USGS_LPC_NE_Statewide_D23_13T_GH_3843.laz",
-            "https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/NE_Statewide_D23/NE_Statewide_3_D23/LAZ/USGS_LPC_NE_Statewide_D23_13T_FG_7085.laz",
+            # "https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/NE_Statewide_D23/NE_Statewide_3_D23/LAZ/USGS_LPC_NE_Statewide_D23_13T_GH_2362.laz",
+            # "https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/NE_Statewide_D23/NE_Statewide_3_D23/LAZ/USGS_LPC_NE_Statewide_D23_13T_GH_3843.laz",
+            # "https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/NE_Statewide_D23/NE_Statewide_3_D23/LAZ/USGS_LPC_NE_Statewide_D23_13T_FG_7085.laz",
         ]
     
     # Passo 1: Baixar arquivos LAZ
