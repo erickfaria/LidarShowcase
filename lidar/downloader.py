@@ -7,6 +7,14 @@ import argparse
 def download_file(url, output_folder, overwrite=False):
     """
     Download a file from a URL to a specified folder
+    
+    Args:
+        url (str): URL do arquivo para download
+        output_folder (str): Pasta onde o arquivo será salvo
+        overwrite (bool): Se True, sobrescreve arquivos existentes
+        
+    Returns:
+        str or None: Caminho para o arquivo baixado ou None se ocorrer erro
     """
     # Extract filename from URL
     filename = os.path.basename(url)
@@ -47,6 +55,15 @@ def download_file(url, output_folder, overwrite=False):
 def download_files_parallel(url_list, output_folder, max_workers=5, overwrite=False):
     """
     Download multiple files in parallel
+    
+    Args:
+        url_list (list): Lista de URLs para download
+        output_folder (str): Pasta onde os arquivos serão salvos
+        max_workers (int): Número máximo de downloads simultâneos
+        overwrite (bool): Se True, sobrescreve arquivos existentes
+        
+    Returns:
+        list: Lista de caminhos para os arquivos baixados com sucesso
     """
     os.makedirs(output_folder, exist_ok=True)
     
