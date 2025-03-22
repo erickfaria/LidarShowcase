@@ -1,50 +1,65 @@
-# LidarShowcase
+# LiDAR Showcase
 
-Ferramenta simples para download e processamento de arquivos LiDAR em formato LAZ para LAS.
+Este repositório contém exemplos e tutoriais para processamento de dados LiDAR (Light Detection and Ranging) utilizando Python.
 
-## Instalação
+## Estrutura do Projeto
 
-1. Clone o repositório:
+- `data/`: Diretório para armazenar arquivos LAS/LAZ
+- `processed_data/`: Diretório para armazenar resultados processados
+- `intro_lidar_notebook.ipynb`: Notebook introdutório com operações básicas em dados LiDAR
+
+## Configuração do Ambiente
+
+### Requisitos
+
+- Python 3.7+
+- Dependências listadas em `requirements.txt`
+
+### Instalação
+
+1. Clone este repositório:
 ```bash
 git clone https://github.com/seu-usuario/LidarShowcase.git
 cd LidarShowcase
 ```
 
-2. Instale as dependências:
+2. Crie e ative um ambiente virtual:
+```bash
+python -m venv venv
+# No Windows
+venv\Scripts\activate
+# No Linux/Mac
+source venv/bin/activate
+```
+
+3. Instale as dependências:
 ```bash
 pip install -r requirements.txt
 ```
 
 ## Uso
 
-### Interface de linha de comando
-
-Para baixar e processar arquivos em uma única operação:
-
+1. Coloque seus arquivos LAS/LAZ na pasta `data/`
+2. Execute o Jupyter Lab:
 ```bash
-python main.py --output ./data
+jupyter lab
 ```
+3. Abra o notebook `intro_lidar_notebook.ipynb` para começar
 
-Para especificar URLs em um arquivo de texto:
-```bash
-python main.py --input urls.txt --output ./data
-```
+## Funcionalidades Demonstradas
 
-### Como módulo Python
+- Leitura de arquivos LAS/LAZ
+- Visualização 2D e 3D de nuvens de pontos
+- Análise de atributos (elevação, intensidade, classificação)
+- Filtragem e segmentação de pontos
+- Criação de modelos digitais de terreno simplificados
+- Exportação de resultados processados
 
-```python
-from lidar.downloader import download_files_parallel
-from lidar.processor import LazProcessor
+## Recursos Adicionais
 
-# Download de arquivos
-urls = ["https://example.com/file.laz"]
-output_dir = "./data"
-downloaded = download_files_parallel(urls, output_dir)
-
-# Processamento LAZ para LAS
-processor = LazProcessor(output_dir)
-processor.process_all_files(output_dir=output_dir)
-```
+- [Documentação do laspy](https://laspy.readthedocs.io/)
+- [Documentação do Open3D](http://www.open3d.org/docs/)
+- [Padrão LAS](https://www.asprs.org/divisions-committees/lidar-division/laser-las-file-format-exchange-activities)
 
 ## Exemplos
 
