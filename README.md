@@ -1,4 +1,4 @@
-# LidarShowcase
+# LidarToolkit
 
 ## A complete toolkit for LiDAR data processing, visualization, and analysis
 
@@ -6,9 +6,9 @@
 
 ## Overview
 
-**LidarShowcase** is a Python toolkit for comprehensive processing of LiDAR (Light Detection and Ranging) data. This project offers a complete pipeline for working with 3D point clouds, from initial reading to digital terrain model generation and advanced surface analysis.
+**LidarToolkit** is a Python toolkit for comprehensive processing of LiDAR (Light Detection and Ranging) data. This project offers a complete pipeline for working with 3D point clouds, from initial reading to digital terrain model generation and advanced surface analysis.
 
-Developed for spatial data scientists, geologists, civil engineers, and environmental researchers, LidarShowcase facilitates the extraction of valuable information from LiDAR datasets with a simple and intuitive interface implemented in Jupyter Notebooks.
+Developed for spatial data scientists, geologists, civil engineers, and environmental researchers, LidarToolkit facilitates the extraction of valuable information from LiDAR datasets with a simple and intuitive interface implemented in Jupyter Notebooks.
 
 ## Key Features
 
@@ -18,14 +18,14 @@ Developed for spatial data scientists, geologists, civil engineers, and environm
   - Interactive 3D visualization via Plotly and Open3D
   - Color coding based on attributes (elevation, intensity, classification)
 
-![3D Visualization](https://github.com/erickfaria/LidarShowcase/images/3d_visualization.png)
+![3D Visualization](https://github.com/erickfaria/LidarToolkit/images/3d_visualization.png)
 
 - **DTM (Digital Terrain Model) Generation**:
   - Multiple interpolation methods
   - Customizable resolution
   - Post-processing (gap filling, smoothing)
 
-![DTM Example](https://github.com/erickfaria/LidarShowcase/images/dtm_example.png)
+![DTM Example](https://github.com/erickfaria/LidarToolkit/images/dtm_example.png)
 
 - **Terrain Analysis**:
   - Slope calculation
@@ -34,7 +34,7 @@ Developed for spatial data scientists, geologists, civil engineers, and environm
   - Curvature
   - Contour generation with customizable intervals
 
-![Terrain Analysis](https://github.com/erickfaria/LidarShowcase/images/terrain_analysis.png)
+![Terrain Analysis](https://github.com/erickfaria/LidarToolkit/images/terrain_analysis.png)
 
 - **Data Export**:
   - Support for multiple formats (GeoTIFF, ASC, PNG, XYZ)
@@ -43,7 +43,7 @@ Developed for spatial data scientists, geologists, civil engineers, and environm
 ## Project Structure
 
 ```
-LidarShowcase/
+LidarToolkit/
 ├── lidar/                           # Main package
 │   ├── lidarReadAndViewer.py        # Data reading and visualization
 │   ├── lidarDTM.py                  # DTM generation and analysis
@@ -70,8 +70,8 @@ LidarShowcase/
 
 ```bash
 # Clone the repository
-git clone https://github.com/erickfaria/LidarShowcase.git
-cd LidarShowcase
+git clone https://github.com/erickfaria/LidarToolkit.git
+cd LidarToolkit
 
 # Set up virtual environment (recommended)
 python -m venv venv
@@ -90,34 +90,34 @@ pip install -r requirements.txt
    - Open the notebook `examples/lidarReadAndViewer.ipynb`
    - Follow the instructions to explore 2D/3D visualizations and attributes
 
-   ![Exploration Example](https://github.com/erickfaria/LidarShowcase/images/exploration_example.png)
+   ![Exploration Example](https://github.com/erickfaria/LidarToolkit/images/exploration_example.png)
 
 3. **Digital Terrain Model Generation**
    - Open the notebook `examples/createLidarMDT.ipynb`
    - Adjust parameters to create optimized DTMs
    - Explore derived analyses such as slope, aspect, and hillshade
 
-   ![DTM Example](https://github.com/erickfaria/LidarShowcase/images/dtm_workflow.png)
+   ![DTM Example](https://github.com/erickfaria/LidarToolkit/images/dtm_workflow.png)
 
 ## Application Examples
 
 ### Topographic Mapping
 
-LidarShowcase enables the creation of detailed topographic maps from LiDAR data. Through DTM generation and contour lines, it's possible to obtain precise terrain representations.
+LidarToolkit enables the creation of detailed topographic maps from LiDAR data. Through DTM generation and contour lines, it's possible to obtain precise terrain representations.
 
-![Topographic Map](https://github.com/erickfaria/LidarShowcase/images/topographic_map.png)
+![Topographic Map](https://github.com/erickfaria/LidarToolkit/images/topographic_map.png)
 
 ### Relief Analysis
 
 Using the terrain analysis features, you can identify important geomorphological characteristics such as steep slopes, plains, and drainage patterns.
 
-![Relief Analysis](https://github.com/erickfaria/LidarShowcase/images/relief_analysis.png)
+![Relief Analysis](https://github.com/erickfaria/LidarToolkit/images/relief_analysis.png)
 
 ### Advanced Visualization
 
 The 3D visualization tools allow you to interactively explore the point cloud, facilitating the identification of structures and patterns in LiDAR data.
 
-![Advanced Visualization](https://github.com/erickfaria/LidarShowcase/images/advanced_visualization.png)
+![Advanced Visualization](https://github.com/erickfaria/LidarToolkit/images/advanced_visualization.png)
 
 ## Technologies Used
 
@@ -145,7 +145,7 @@ Features planned for future versions:
 
 ## Contributions
 
-Contributions are welcome! If you want to contribute to LidarShowcase:
+Contributions are welcome! If you want to contribute to LidarToolkit:
 
 1. Fork the repository
 2. Create a branch for your feature (`git checkout -b feature/new-functionality`)
@@ -163,7 +163,7 @@ This project is licensed under the MIT License.
 
 Erick Faria - [GitHub](https://github.com/erickfaria)
 
-Project link: [https://github.com/erickfaria/LidarShowcase](https://github.com/erickfaria/LidarShowcase)
+Project link: [https://github.com/erickfaria/LidarToolkit](https://github.com/erickfaria/LidarToolkit)
 
 ---
 
