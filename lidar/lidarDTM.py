@@ -152,13 +152,14 @@ class DTMGenerator:
         print(f"DTM created with grid size: {x_range} x {y_range}")
         return self.dtm
     
-    def generate_rbf_dtm(self, function='thin_plate', smooth=0.1):
+    def generate_rbf_dtm(self, function='thin_plate', smooth=0.1, chunk_size=100):
         """
-        Generate a DTM using Radial Basis Function interpolation.
+        Generate a DTM using Radial Basis Function interpolation with chunking to save memory.
         
         Args:
             function (str): RBF function: 'thin_plate', 'multiquadric', 'gaussian'
             smooth (float): Smoothing parameter
+            chunk_size (int): Size of chunks to process at once (smaller = less memory)
             
         Returns:
             dict: Dictionary containing grid_x, grid_y, and grid_z arrays
@@ -199,9 +200,55 @@ class DTMGenerator:
         print(f"Training RBF with function: {function}, smoothing: {smooth}")
         rbf = Rbf(train_x, train_y, train_z, function=function, smooth=smooth)
         
-        # Predict heights on the grid
-        print("Predicting heights for the entire grid...")
-        grid_z = rbf(grid_x, grid_y)
+        # Preallocate grid_z with NaN values
+        grid_z = np.full(grid_x.shape, np.nan)
+        
+        # Process grid in chunks to reduce memory usage
+        print(f"Predicting heights using chunks of {chunk_size}x{chunk_size} to save memory...")
+        
+        # Calculate number of chunks
+        num_chunks_x = int(np.ceil(x_range / chunk_size))
+        num_chunks_y = int(np.ceil(y_range / chunk_size))
+        total_chunks = num_chunks_x * num_chunks_y
+        
+        # Process each chunk
+        chunk_count = 0
+        for i in range(num_chunks_x):
+            x_start = i * chunk_size
+            x_end = min((i + 1) * chunk_size, x_range)
+            
+            for j in range(num_chunks_y):
+                y_start = j * chunk_size
+                y_end = min((j + 1) * chunk_size, y_range)
+                
+                chunk_count += 1
+                print(f"\rProcessing chunk {chunk_count}/{total_chunks} ({(chunk_count/total_chunks)*100:.1f}%)...", end="")
+                
+                # Get chunk coordinates
+                x_chunk = grid_x[x_start:x_end, y_start:y_end]
+                y_chunk = grid_y[x_start:x_end, y_start:y_end]
+                
+                # Predict heights for chunk
+                z_chunk = rbf(x_chunk, y_chunk)
+                
+                # Insert chunk into full grid
+                grid_z[x_start:x_end, y_start:y_end] = z_chunk
+        
+        print("\nChunk processing completed!")
+        
+        # Alternative simple approach using flattened arrays (may still require substantial memory)
+        # Try this if the chunked approach above still has issues
+        # chunk_size = 100000  # Process this many points at a time
+        # grid_z = np.zeros_like(grid_x)
+        # x_flat = grid_x.flatten()
+        # y_flat = grid_y.flatten()
+        # z_flat = np.zeros_like(x_flat)
+        # total_points = len(x_flat)
+        # for i in range(0, total_points, chunk_size):
+        #     end = min(i + chunk_size, total_points)
+        #     print(f"\rProcessing points {i:,}-{end:,} of {total_points:,} ({i/total_points*100:.1f}%)...", end="")
+        #     z_flat[i:end] = rbf(x_flat[i:end], y_flat[i:end])
+        # grid_z = z_flat.reshape(grid_x.shape)
         
         # Store the result
         self.dtm = {
