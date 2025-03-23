@@ -1,7 +1,7 @@
 """
-Módulo de utilitários para processamento de dados LiDAR.
-Este módulo contém funções e classes para carregamento, visualização,
-análise e exportação de dados LiDAR.
+LiDAR Visualization Module.
+This module contains utilities for loading, visualizing,
+and analyzing LiDAR data.
 """
 
 import os
@@ -15,27 +15,44 @@ import ipywidgets as widgets
 
 
 class LidarFileHandler:
-    """Classe para gerenciar arquivos LiDAR e fornecer widgets para seleção."""
+    """Class for managing LiDAR files and providing selection widgets."""
     
     @staticmethod
     def list_las_files(data_dir="data"):
-        """Lista arquivos LAS/LAZ em um diretório."""
+        """
+        Lists LAS/LAZ files in a directory.
+        
+        Args:
+            data_dir (str): Directory path to search for LiDAR files
+            
+        Returns:
+            tuple: List of LAS/LAZ files and the directory path
+        """
         las_files = [f for f in os.listdir(data_dir) if f.endswith(('.las', '.laz'))]
         return las_files, data_dir
     
     @staticmethod
     def create_file_selector(las_files, data_dir):
-        """Cria um widget para seleção de arquivos."""
+        """
+        Creates a widget for file selection.
+        
+        Args:
+            las_files (list): List of LAS/LAZ files
+            data_dir (str): Directory path containing the files
+            
+        Returns:
+            tuple: A dropdown widget and the selected file path
+        """
         selected_file_path = os.path.join(data_dir, las_files[0]) if las_files else None
         
         def select_file(change):
             nonlocal selected_file_path
             selected_file_path = os.path.join(data_dir, change['new'])
-            print(f"Arquivo selecionado: {selected_file_path}")
+            print(f"Selected file: {selected_file_path}")
         
         file_dropdown = widgets.Dropdown(
             options=las_files,
-            description='Selecione o arquivo:',
+            description='Select file:',
             style={'description_width': 'initial'}
         )
         
@@ -44,102 +61,140 @@ class LidarFileHandler:
     
     @staticmethod
     def read_las_file(file_path):
-        """Lê um arquivo LAS/LAZ."""
+        """
+        Reads a LAS/LAZ file.
+        
+        Args:
+            file_path (str): Path to the LAS/LAZ file
+            
+        Returns:
+            laspy.LasData or None: The loaded LiDAR data or None if an error occurs
+        """
         try:
             las_data = laspy.read(file_path)
-            print("\nArquivo carregado com sucesso!")
+            print("\nFile loaded successfully!")
             return las_data
         except Exception as e:
-            print(f"Erro ao carregar o arquivo: {e}")
+            print(f"Error loading file: {e}")
             return None
     
     @staticmethod
     def export_subset(las_data, output_path, mask=None, header_changes=None):
-        """Exporta um subconjunto de pontos para um novo arquivo LAS."""
+        """
+        Exports a subset of points to a new LAS file.
+        
+        Args:
+            las_data (laspy.LasData): The LiDAR data
+            output_path (str): Path to save the output file
+            mask (numpy.ndarray, optional): Boolean mask for point selection
+            header_changes (dict, optional): Dictionary of header attribute changes
+            
+        Returns:
+            bool: True if export succeeds, False otherwise
+        """
         try:
-            # Criar uma cópia dos pontos
+            # Create a copy of the points
             if mask is None:
-                # Exportar todos os pontos
+                # Export all points
                 subset = las_data.copy()
             else:
-                # Exportar apenas os pontos que correspondem à máscara
+                # Export only points matching the mask
                 subset = las_data.points[mask].copy()
             
-            # Aplicar alterações ao cabeçalho, se houver
+            # Apply header changes if any
             if header_changes:
                 for key, value in header_changes.items():
                     if hasattr(subset.header, key):
                         setattr(subset.header, key, value)
             
-            # Salvar o arquivo
+            # Save the file
             subset.write(output_path)
-            print(f"Arquivo salvo com sucesso em: {output_path}")
-            print(f"Total de pontos exportados: {subset.header.point_count:,}")
+            print(f"File saved successfully at: {output_path}")
+            print(f"Total exported points: {subset.header.point_count:,}")
             return True
         except Exception as e:
-            print(f"Erro ao exportar arquivo: {e}")
+            print(f"Error exporting file: {e}")
             return False
 
 
 class LidarInfo:
-    """Classe para obter e exibir informações sobre dados LiDAR."""
+    """Class for retrieving and displaying information about LiDAR data."""
     
     @staticmethod
     def print_basic_info(las_data):
-        """Exibe informações básicas sobre o arquivo LAS/LAZ."""
+        """
+        Displays basic information about the LAS/LAZ file.
+        
+        Args:
+            las_data (laspy.LasData): The LiDAR data
+        """
         if las_data is None:
             return
         
-        print(f"Versão do formato LAS: {las_data.header.version}")
-        print(f"Número total de pontos: {las_data.header.point_count}")
-        print(f"Extensão dos dados:")
-        print(f"  X: {las_data.header.mins[0]:.2f} a {las_data.header.maxs[0]:.2f}")
-        print(f"  Y: {las_data.header.mins[1]:.2f} a {las_data.header.maxs[1]:.2f}")
-        print(f"  Z: {las_data.header.mins[2]:.2f} a {las_data.header.maxs[2]:.2f}")
+        print(f"LAS format version: {las_data.header.version}")
+        print(f"Total point count: {las_data.header.point_count}")
+        print(f"Data extent:")
+        print(f"  X: {las_data.header.mins[0]:.2f} to {las_data.header.maxs[0]:.2f}")
+        print(f"  Y: {las_data.header.mins[1]:.2f} to {las_data.header.maxs[1]:.2f}")
+        print(f"  Z: {las_data.header.mins[2]:.2f} to {las_data.header.maxs[2]:.2f}")
         
-        # Mostrar as dimensões disponíveis (atributos) nos dados
-        print("\nAtributos disponíveis:")
+        # Show available dimensions (attributes) in the data
+        print("\nAvailable attributes:")
         for dimension in las_data.point_format.dimensions:
             print(f"  - {dimension.name}")
     
     @staticmethod
     def get_class_names():
-        """Retorna um dicionário com os nomes das classes padrão LAS."""
+        """
+        Returns a dictionary with standard LAS class names.
+        
+        Returns:
+            dict: Dictionary mapping class codes to descriptive names
+        """
         return {
-            0: "Criado, nunca classificado",
-            1: "Não classificado",
-            2: "Solo",
-            3: "Vegetação baixa",
-            4: "Vegetação média",
-            5: "Vegetação alta",
-            6: "Edificação",
-            7: "Ponto baixo (ruído)",
-            8: "Ponto-chave",
-            9: "Água",
-            10: "Trilho ferrovia",
-            11: "Superfície de rodovia",
-            12: "Ponto sobreposto",
-            13: "Fio - proteção",
-            14: "Fio - condutor (fase)",
-            15: "Torre de transmissão",
-            16: "Conector de fio",
-            17: "Cobertura da ponte",
-            18: "Ruído alto"
+            0: "Created, never classified",
+            1: "Unclassified",
+            2: "Ground",
+            3: "Low Vegetation",
+            4: "Medium Vegetation",
+            5: "High Vegetation",
+            6: "Building",
+            7: "Low Point (noise)",
+            8: "Key-point",
+            9: "Water",
+            10: "Rail",
+            11: "Road Surface",
+            12: "Overlap Point",
+            13: "Wire - Guard",
+            14: "Wire - Conductor (phase)",
+            15: "Transmission Tower",
+            16: "Wire-structure Connector",
+            17: "Bridge Deck",
+            18: "High Noise"
         }
 
 
 class LidarVisualization:
-    """Classe para visualização de dados LiDAR."""
+    """Class for visualizing LiDAR data."""
     
     @staticmethod
     def get_points(las_data, max_points=None):
-        """Extrai coordenadas e cria array de pontos."""
-        # Extrair coordenadas
+        """
+        Extracts coordinates and creates a point array.
+        
+        Args:
+            las_data (laspy.LasData): The LiDAR data
+            max_points (int, optional): Maximum number of points to extract
+            
+        Returns:
+            numpy.ndarray: Array of points with shape (n, 3)
+        """
+        # Extract coordinates
         x = las_data.x
         y = las_data.y
         z = las_data.z
         
-        # Limitar o número de pontos para visualização mais rápida (se necessário)
+        # Limit the number of points for faster visualization if necessary
         if max_points and max_points < len(x):
             idx = np.random.choice(len(x), max_points, replace=False)
             x = x[idx]
@@ -150,31 +205,41 @@ class LidarVisualization:
     
     @staticmethod
     def plot_2d_view(las_data, max_points=100000, point_size=0.1, point_alpha=0.5, color_map='viridis', use_hexbin=False):
-        """Cria uma visualização 2D (vista superior) da nuvem de pontos."""
+        """
+        Creates a 2D (top-down) visualization of the point cloud.
+        
+        Args:
+            las_data (laspy.LasData): The LiDAR data
+            max_points (int): Maximum number of points to plot
+            point_size (float): Size of points in the scatter plot
+            point_alpha (float): Transparency of points (0-1)
+            color_map (str): Matplotlib colormap name
+            use_hexbin (bool): Whether to use hexbin instead of scatter
+        """
         if las_data is None:
             return
         
         plt.figure(figsize=(10, 10))
-        # Amostragem para tornar a visualização mais rápida
+        # Sample for faster visualization
         sample_idx = np.random.choice(len(las_data.x), min(max_points, len(las_data.x)), replace=False)
         
         if use_hexbin:
-            # Visualização usando hexbin - cria uma representação contínua
+            # Visualization using hexbin - creates a continuous representation
             hb = plt.hexbin(las_data.x[sample_idx], las_data.y[sample_idx], 
                            C=las_data.z[sample_idx], 
-                           gridsize=100,    # Ajuste para controlar a resolução
+                           gridsize=100,    # Adjust to control resolution
                            cmap=color_map,
-                           mincnt=1,        # Mostra células com pelo menos 1 ponto
+                           mincnt=1,        # Show cells with at least 1 point
                            alpha=point_alpha)
-            plt.colorbar(hb, label='Elevação média (Z)')
+            plt.colorbar(hb, label='Average Elevation (Z)')
         else:
-            # Visualização usando scatter
+            # Visualization using scatter
             plt.scatter(las_data.x[sample_idx], las_data.y[sample_idx], 
                         c=las_data.z[sample_idx], cmap=color_map, 
                         s=point_size, alpha=point_alpha)
-            plt.colorbar(label='Elevação (Z)')
+            plt.colorbar(label='Elevation (Z)')
         
-        plt.title('Vista Superior da Nuvem de Pontos LiDAR')
+        plt.title('Top-Down View of LiDAR Point Cloud')
         plt.xlabel('X')
         plt.ylabel('Y')
         plt.axis('equal')
@@ -183,15 +248,27 @@ class LidarVisualization:
 
     @staticmethod
     def plot_3d_plotly(las_data, max_points=200000, point_size=1, opacity=0.8, color_map='Viridis'):
-        """Cria uma visualização 3D interativa usando Plotly."""
+        """
+        Creates an interactive 3D visualization using Plotly.
+        
+        Args:
+            las_data (laspy.LasData): The LiDAR data
+            max_points (int): Maximum number of points to plot
+            point_size (float): Size of points in the 3D plot
+            opacity (float): Transparency of points (0-1)
+            color_map (str): Plotly colorscale name
+            
+        Returns:
+            plotly.graph_objects.Figure: The interactive 3D figure
+        """
         if las_data is None:
             return
         
-        # Amostragem para tornar a visualização mais rápida
+        # Sample for faster visualization
         sample_size = min(max_points, len(las_data.x))
         sample_idx = np.random.choice(len(las_data.x), sample_size, replace=False)
         
-        # Criar figura 3D
+        # Create 3D figure
         fig = go.Figure(data=[go.Scatter3d(
             x=las_data.x[sample_idx],
             y=las_data.y[sample_idx],
@@ -202,12 +279,12 @@ class LidarVisualization:
                 color=las_data.z[sample_idx],
                 colorscale=color_map,
                 opacity=opacity,
-                colorbar=dict(title="Elevação (Z)")
+                colorbar=dict(title="Elevation (Z)")
             )
         )])
         
         fig.update_layout(
-            title="Visualização 3D da Nuvem de Pontos LiDAR",
+            title="3D Visualization of LiDAR Point Cloud",
             scene=dict(
                 xaxis_title='X',
                 yaxis_title='Y',
@@ -222,77 +299,94 @@ class LidarVisualization:
     
     @staticmethod
     def visualize_open3d(las_data, max_points=500000):
-        """Visualiza a nuvem de pontos usando Open3D."""
+        """
+        Visualizes the point cloud using Open3D.
+        
+        Args:
+            las_data (laspy.LasData): The LiDAR data
+            max_points (int): Maximum number of points to visualize
+        """
         if las_data is None:
             return
         
-        # Obter pontos (com limite para melhor desempenho)
+        # Get points (with limit for better performance)
         points = LidarVisualization.get_points(las_data, max_points=max_points)
         
-        # Criar nuvem de pontos Open3D
+        # Create Open3D point cloud
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(points)
         
-        # Normalizar alturas para coloração
-        heights = points[:, 2]  # valores Z
+        # Normalize heights for coloring
+        heights = points[:, 2]  # Z values
         colors = plt.cm.viridis((heights - np.min(heights)) / (np.max(heights) - np.min(heights)))[:, :3]
         pcd.colors = o3d.utility.Vector3dVector(colors)
         
-        # Instruções
-        print("\nAbrindo visualizador Open3D (janela separada)...")
-        print("Dicas de navegação:")
-        print("- Rotação: clique e arraste com o botão esquerdo do mouse")
-        print("- Zoom: roda do mouse ou botão direito + arrastar")
-        print("- Movimento: Shift + clique e arraste")
+        # Instructions
+        print("\nOpening Open3D viewer (separate window)...")
+        print("Navigation tips:")
+        print("- Rotate: left-click and drag")
+        print("- Zoom: mouse wheel or right-click + drag")
+        print("- Pan: Shift + left-click and drag")
         
-        # Visualizar
+        # Visualize
         o3d.visualization.draw_geometries([pcd])
     
     @staticmethod
     def plot_elevation_histogram(las_data):
-        """Plota um histograma da distribuição de alturas (Z)."""
+        """
+        Plots a histogram of height (Z) distribution.
+        
+        Args:
+            las_data (laspy.LasData): The LiDAR data
+        """
         if las_data is None:
             return
         
         plt.figure(figsize=(12, 6))
         plt.hist(las_data.z, bins=100, alpha=0.7, color='green')
-        plt.title('Distribuição das Alturas (Z)')
-        plt.xlabel('Altura (Z)')
-        plt.ylabel('Frequência')
+        plt.title('Height (Z) Distribution')
+        plt.xlabel('Height (Z)')
+        plt.ylabel('Frequency')
         plt.grid(True, alpha=0.3)
         plt.show()
         
-        # Estatísticas básicas
-        print(f"Estatísticas de altura (Z):")
-        print(f"  Mínimo: {np.min(las_data.z):.2f}")
-        print(f"  Máximo: {np.max(las_data.z):.2f}")
-        print(f"  Média: {np.mean(las_data.z):.2f}")
-        print(f"  Mediana: {np.median(las_data.z):.2f}")
-        print(f"  Desvio padrão: {np.std(las_data.z):.2f}")
+        # Basic statistics
+        print(f"Height (Z) statistics:")
+        print(f"  Minimum: {np.min(las_data.z):.2f}")
+        print(f"  Maximum: {np.max(las_data.z):.2f}")
+        print(f"  Mean: {np.mean(las_data.z):.2f}")
+        print(f"  Median: {np.median(las_data.z):.2f}")
+        print(f"  Standard deviation: {np.std(las_data.z):.2f}")
     
     @staticmethod
     def plot_intensity(las_data, max_points=100000):
-        """Plota a distribuição de intensidade e visualização 2D colorida por intensidade."""
+        """
+        Plots intensity distribution and 2D view colored by intensity.
+        
+        Args:
+            las_data (laspy.LasData): The LiDAR data
+            max_points (int): Maximum number of points to plot
+        """
         if las_data is None or not hasattr(las_data, 'intensity'):
             return
         
         plt.figure(figsize=(12, 10))
         
-        # Subplot 1: Histograma de intensidade
+        # Subplot 1: Intensity histogram
         plt.subplot(2, 1, 1)
         plt.hist(las_data.intensity, bins=100, alpha=0.7, color='purple')
-        plt.title('Distribuição dos Valores de Intensidade')
-        plt.xlabel('Intensidade')
-        plt.ylabel('Frequência')
+        plt.title('Intensity Value Distribution')
+        plt.xlabel('Intensity')
+        plt.ylabel('Frequency')
         plt.grid(True, alpha=0.3)
         
-        # Subplot 2: Visualização da intensidade na nuvem de pontos
+        # Subplot 2: Intensity visualization in point cloud
         plt.subplot(2, 1, 2)
         sample_idx = np.random.choice(len(las_data.x), min(max_points, len(las_data.x)), replace=False)
         plt.scatter(las_data.x[sample_idx], las_data.y[sample_idx], 
                     c=las_data.intensity[sample_idx], cmap='inferno', s=0.1, alpha=0.7)
-        plt.colorbar(label='Intensidade')
-        plt.title('Vista Superior com Valores de Intensidade')
+        plt.colorbar(label='Intensity')
+        plt.title('Top-Down View with Intensity Values')
         plt.xlabel('X')
         plt.ylabel('Y')
         plt.axis('equal')
@@ -301,29 +395,34 @@ class LidarVisualization:
     
     @staticmethod
     def plot_classification_stats(las_data):
-        """Plota estatísticas de classificação dos pontos."""
+        """
+        Plots point classification statistics.
+        
+        Args:
+            las_data (laspy.LasData): The LiDAR data
+        """
         if las_data is None or not hasattr(las_data, 'classification'):
             return
         
         class_names = LidarInfo.get_class_names()
         
-        # Contagem de pontos por classe
+        # Count points per class
         unique_classes, counts = np.unique(las_data.classification, return_counts=True)
         class_counts = dict(zip(unique_classes, counts))
         
-        # Criar labels para o gráfico
-        labels = [f"{c} - {class_names.get(c, 'Desconhecido')} ({class_counts[c]})" for c in unique_classes]
+        # Create labels for the chart
+        labels = [f"{c} - {class_names.get(c, 'Unknown')} ({class_counts[c]})" for c in unique_classes]
         
-        # Plotar distribuição de classes
+        # Plot class distribution
         plt.figure(figsize=(12, 6))
         bars = plt.bar(range(len(unique_classes)), counts, alpha=0.7)
         plt.xticks(range(len(unique_classes)), [str(c) for c in unique_classes], rotation=45)
-        plt.title('Distribuição das Classes de Pontos')
-        plt.xlabel('Código de Classificação')
-        plt.ylabel('Número de Pontos')
+        plt.title('Point Class Distribution')
+        plt.xlabel('Classification Code')
+        plt.ylabel('Number of Points')
         plt.grid(True, alpha=0.3, axis='y')
         
-        # Adicionar labels no topo das barras
+        # Add labels on top of bars
         for bar in bars:
             height = bar.get_height()
             plt.text(bar.get_x() + bar.get_width()/2., height,
@@ -332,481 +431,71 @@ class LidarVisualization:
         plt.tight_layout()
         plt.show()
         
-        # Mostrar descrição das classes encontradas
-        print("\nClasses identificadas no conjunto de dados:")
+        # Show description of identified classes
+        print("\nClasses identified in the dataset:")
         for c in unique_classes:
             percentage = (class_counts[c] / len(las_data.classification)) * 100
-            print(f"  Classe {c} - {class_names.get(c, 'Desconhecido')}: {class_counts[c]:,} pontos ({percentage:.2f}%)")
+            print(f"  Class {c} - {class_names.get(c, 'Unknown')}: {class_counts[c]:,} points ({percentage:.2f}%)")
     
     @staticmethod
     def plot_points_by_class(las_data, class_value, max_points=None, point_size=0.5, title=None):
         """
-        Visualiza pontos com uma classe específica ou lista de classes.
+        Visualizes points with a specific class or list of classes.
         
         Args:
-            las_data: Dados LAS carregados
-            class_value: Valor inteiro da classe ou lista de valores de classe a serem visualizados
-            max_points: Número máximo de pontos a serem plotados (para melhor desempenho)
-            point_size: Tamanho dos pontos no gráfico
-            title: Título personalizado para o gráfico
+            las_data (laspy.LasData): The LiDAR data
+            class_value (int or list): Class value(s) to visualize
+            max_points (int, optional): Maximum number of points to plot
+            point_size (float): Size of points in the plot
+            title (str, optional): Custom title for the plot
+            
+        Returns:
+            tuple: x, y, z coordinates of the filtered points
         """
-        # Verificar se class_value é uma lista ou um valor único
+        # Check if class_value is a list or a single value
         if not isinstance(class_value, list):
             class_value = [class_value]
         
-        # Criar máscara para pontos das classes desejadas
+        # Create mask for points of desired classes
         class_mask = np.isin(las_data.classification, class_value)
         
-        # Filtrar pontos
+        # Filter points
         x = las_data.x[class_mask]
         y = las_data.y[class_mask]
         z = las_data.z[class_mask]
         
-        # Limitar o número de pontos se necessário
+        # Limit number of points if necessary
         if max_points and len(x) > max_points:
             idx = np.random.choice(len(x), max_points, replace=False)
             x = x[idx]
             y = y[idx]
             z = z[idx]
         
-        # Criar visualização
+        # Create visualization
         fig, ax = plt.subplots(figsize=(10, 8))
         
-        # Definir título do gráfico
+        # Set plot title
         if title:
             plot_title = title
         elif len(class_value) == 1:
-            plot_title = f"Pontos da Classe {class_value[0]}"
+            plot_title = f"Points of Class {class_value[0]}"
         else:
-            plot_title = f"Pontos das Classes {', '.join(map(str, class_value))}"
+            plot_title = f"Points of Classes {', '.join(map(str, class_value))}"
         
-        # Criar scatter plot com cores baseadas na elevação
+        # Create scatter plot with colors based on elevation
         scatter = ax.scatter(x, y, c=z, s=point_size, cmap='viridis', alpha=0.7)
         
-        # Adicionar barra de cores e legendas
+        # Add color bar and legends
         cbar = plt.colorbar(scatter, ax=ax)
-        cbar.set_label('Elevação (m)')
+        cbar.set_label('Elevation (m)')
         
         ax.set_title(plot_title)
-        ax.set_xlabel('Coordenada X')
-        ax.set_ylabel('Coordenada Y')
+        ax.set_xlabel('X Coordinate')
+        ax.set_ylabel('Y Coordinate')
         ax.set_aspect('equal')
         
         plt.tight_layout()
         plt.show()
         
-        # Retornar os pontos filtrados
+        # Return filtered points
         return x, y, z
-
-
-class LidarProcessing:
-    """Classe para processamento de dados LiDAR."""
-    
-    @staticmethod
-    def filter_ground_points(las_data, visualize=True, max_points=100000):
-        """Filtra e opcionalmente visualiza pontos de solo (classe 2)."""
-        if las_data is None or not hasattr(las_data, 'classification'):
-            return None
-        
-        # Verificar se existem pontos de solo (classe 2)
-        if 2 in np.unique(las_data.classification):
-            # Filtrar pontos de solo
-            ground_mask = las_data.classification == 2
-            ground_points = {
-                'x': las_data.x[ground_mask],
-                'y': las_data.y[ground_mask],
-                'z': las_data.z[ground_mask]
-            }
-            
-            print(f"Pontos de solo extraídos: {len(ground_points['x']):,} de {len(las_data.x):,} ({len(ground_points['x'])/len(las_data.x)*100:.2f}%)")
-            
-            if visualize and len(ground_points['x']) > 0:
-                # Visualizar pontos de solo
-                plt.figure(figsize=(10, 10))
-                # Amostragem para visualização mais rápida
-                sample_size = min(max_points, len(ground_points['x']))
-                sample_idx = np.random.choice(len(ground_points['x']), sample_size, replace=False)
-                
-                plt.scatter(ground_points['x'][sample_idx], ground_points['y'][sample_idx], 
-                            c=ground_points['z'][sample_idx], cmap='terrain', s=0.5, alpha=0.7)
-                plt.colorbar(label='Elevação (Z)')
-                plt.title('Pontos Classificados como Solo (Classe 2)')
-                plt.xlabel('X')
-                plt.ylabel('Y')
-                plt.axis('equal')
-                plt.grid(True, alpha=0.3)
-                plt.show()
-            
-            return ground_mask, ground_points
-        else:
-            print("Não foram encontrados pontos classificados como solo (classe 2) no arquivo.")
-            return None, None
-    
-    @staticmethod
-    def create_simple_dtm(las_data, resolution=1.0, fill_gaps=False):
-        """Cria um modelo digital de terreno (MDT) simples e rápido."""
-        if las_data is None:
-            return None
-        
-        # Usar pontos de solo se disponíveis, caso contrário usar todos os pontos
-        if hasattr(las_data, 'classification') and 2 in np.unique(las_data.classification):
-            mask = las_data.classification == 2
-            x = las_data.x[mask]
-            y = las_data.y[mask]
-            z = las_data.z[mask]
-            print("Criando MDT a partir dos pontos classificados como solo.")
-        else:
-            x = las_data.x
-            y = las_data.y
-            z = las_data.z
-            print("Criando MDT a partir de todos os pontos (sem filtragem por classe).")
-        
-        # Verificar se há pontos suficientes
-        if len(x) < 3:
-            print("Não há pontos suficientes para criar um MDT.")
-            return None
-        
-        # Calcular os limites da grade
-        x_min, x_max = np.min(x), np.max(x)
-        y_min, y_max = np.min(y), np.max(y)
-        
-        # Criar grade
-        x_grid = np.arange(x_min, x_max + resolution, resolution)
-        y_grid = np.arange(y_min, y_max + resolution, resolution)
-        
-        # Para melhorar a performance, reduzir o número de operações
-        # Usar método rápido de binning para criar o MDT
-        num_x_cells = len(x_grid) - 1
-        num_y_cells = len(y_grid) - 1
-        
-        # Inicializar grade de elevação com NaN
-        elevation_grid = np.full((num_y_cells, num_x_cells), np.nan)
-        
-        # Converter coordenadas para índices de células
-        x_indices = np.clip(np.floor((x - x_min) / resolution).astype(int), 0, num_x_cells - 1)
-        y_indices = np.clip(np.floor((y - y_min) / resolution).astype(int), 0, num_y_cells - 1)
-        
-        # Para cada ponto, atualizar a célula correspondente com a elevação mínima
-        for i in range(len(x)):
-            xi, yi = x_indices[i], y_indices[i]
-            current_z = elevation_grid[yi, xi]
-            
-            if np.isnan(current_z) or z[i] < current_z:
-                elevation_grid[yi, xi] = z[i]
-        
-        # Opcionalmente, preencher buracos (células vazias)
-        if fill_gaps and np.any(np.isnan(elevation_grid)):
-            from scipy import ndimage
-            print("Preenchendo células vazias...")
-            # Criar uma máscara para identificar células vazias
-            mask = np.isnan(elevation_grid)
-            # Preencher células vazias com a média dos vizinhos
-            elevation_grid = ndimage.gaussian_filter(np.nan_to_num(elevation_grid), sigma=1)
-            # Aplicar a máscara para manter apenas os valores originais onde já havia dados
-            elevation_grid[~mask] = np.nan_to_num(elevation_grid)[~mask]
-        
-        # Criar meshgrid para visualização
-        xx, yy = np.meshgrid(x_grid[:-1] + resolution/2, y_grid[:-1] + resolution/2)
-        
-        # Retornar os dados do MDT para visualização
-        dtm_data = {
-            'dem': elevation_grid,
-            'grid_x': x_grid[:-1] + resolution/2,
-            'grid_y': y_grid[:-1] + resolution/2,
-            'xx': xx,
-            'yy': yy,
-            'resolution': resolution,
-            'bounds': (x_min, x_max, y_min, y_max)
-        }
-        
-        print(f"MDT criado com {num_x_cells}x{num_y_cells} células.")
-        return dtm_data
-    
-    @staticmethod
-    def create_interpolated_dtm(las_data, resolution=1.0, method='linear'):
-        """
-        Cria um Modelo Digital de Terreno (MDT) interpolado a partir dos pontos de solo.
-        
-        Parâmetros:
-            las_data (laspy.LasData): Dados LiDAR
-            resolution (float): Resolução do MDT em metros
-            method (str): Método de interpolação ('linear', 'cubic', 'nearest')
-        
-        Retorna:
-            dict: Dicionário contendo os dados do MDT
-        """
-        import numpy as np
-        from scipy.interpolate import griddata
-        
-        # Filtrar apenas pontos classificados como solo (classe 2)
-        if hasattr(las_data, 'classification'):
-            ground_mask = las_data.classification == 2
-            if np.sum(ground_mask) == 0:
-                print("Aviso: Nenhum ponto classificado como solo encontrado. Usando todos os pontos.")
-                ground_mask = np.ones_like(las_data.classification, dtype=bool)
-        else:
-            print("Aviso: Classificação não disponível. Usando todos os pontos.")
-            ground_mask = np.ones(len(las_data.x), dtype=bool)
-        
-        # Extrair pontos de solo
-        x = las_data.x[ground_mask]
-        y = las_data.y[ground_mask]
-        z = las_data.z[ground_mask]
-        
-        # Verificar se há pontos suficientes
-        if len(x) < 3:
-            print("Não há pontos suficientes para criar um MDT.")
-            return None
-
-        # Para melhorar a performance, reduzir a amostragem de pontos
-        # Se tiver mais de 1 milhão de pontos, amostrar para melhorar performance
-        if len(x) > 1000000:
-            # Amostrar 10% dos pontos ou no máximo 500.000, o que for maior
-            sample_size = max(int(len(x) * 0.1), 500000)
-            idx = np.random.choice(len(x), sample_size, replace=False)
-            x = x[idx]
-            y = y[idx]
-            z = z[idx]
-            print(f"Usando amostragem de {sample_size:,} pontos para melhorar performance.")
-        
-        # Calcular limites da área
-        x_min, x_max = np.min(x), np.max(x)
-        y_min, y_max = np.min(y), np.max(y)
-        
-        # Criar grade regular
-        grid_x = np.arange(x_min, x_max + resolution, resolution)
-        grid_y = np.arange(y_min, y_max + resolution, resolution)
-        mesh_x, mesh_y = np.meshgrid(grid_x, grid_y)
-        
-        print(f"Interpolando MDT com método {method}...")
-        
-        # Realizar interpolação
-        points = np.column_stack((x, y))
-        grid_z = griddata(points, z, (mesh_x, mesh_y), method=method)
-        
-        # Preencher valores nulos (pode ocorrer com cubic)
-        if np.any(np.isnan(grid_z)):
-            print("Preenchendo valores nulos...")
-            mask = np.isnan(grid_z)
-            grid_z[mask] = griddata(points, z, (mesh_x[mask], mesh_y[mask]), method='nearest')
-        
-        # Criar dicionário de saída com os dados processados
-        dtm_data = {
-            'dem': grid_z,
-            'grid_x': grid_x,
-            'grid_y': grid_y,
-            'xx': mesh_x,
-            'yy': mesh_y,
-            'resolution': resolution,
-            'bounds': (x_min, x_max, y_min, y_max)
-        }
-        
-        print(f"MDT criado com {len(grid_x)}x{len(grid_y)} células.")
-        return dtm_data
-    
-    @staticmethod
-    def visualize_dtm(dtm_data, cmap='terrain', title='Modelo Digital de Terreno'):
-        """
-        Visualiza um MDT simples.
-        """
-        import numpy as np
-        import matplotlib.pyplot as plt
-        
-        if dtm_data is None:
-            print("Dados do MDT inválidos.")
-            return
-        
-        # Extrair dados do dicionário
-        dem = dtm_data['dem']
-        grid_x = dtm_data['grid_x']
-        grid_y = dtm_data['grid_y']
-        
-        # Configurar figura
-        plt.figure(figsize=(10, 8))
-        
-        # Plotar o MDT
-        img = plt.imshow(dem, extent=[grid_x.min(), grid_x.max(), grid_y.min(), grid_y.max()],
-                        origin='lower', cmap=cmap, aspect='equal')
-        
-        # Adicionar barra de cores
-        plt.colorbar(img, label='Elevação (m)')
-        
-        plt.title(title)
-        plt.xlabel('Coordenada X (m)')
-        plt.ylabel('Coordenada Y (m)')
-        plt.grid(alpha=0.3)
-        plt.tight_layout()
-        plt.show()
-    
-    @staticmethod
-    def visualize_enhanced_dtm(dtm_data, cmap='terrain', alpha=0.8):
-        """
-        Visualiza um MDT com realce de relevo (hillshade).
-        """
-        import numpy as np
-        import matplotlib.pyplot as plt
-        from matplotlib.colors import LightSource
-        
-        if dtm_data is None:
-            print("Dados do MDT inválidos.")
-            return
-        
-        # Extrair dados do dicionário
-        grid_x = dtm_data['grid_x']
-        grid_y = dtm_data['grid_y']
-        dem = dtm_data['dem']
-        
-        # Configurar figura
-        fig, ax = plt.subplots(figsize=(12, 10))
-        
-        # Criar fonte de luz para hillshade
-        ls = LightSource(azdeg=315, altdeg=45)
-        
-        # Calcular hillshade
-        hillshade = ls.hillshade(dem, vert_exag=3, dx=dtm_data['resolution'], dy=dtm_data['resolution'])
-        
-        # Criar imagem colorida do MDT
-        rgb = ls.blend_overlay(hillshade, dem, cmap=plt.get_cmap(cmap))
-        
-        # Renderizar a imagem
-        img = ax.imshow(rgb, extent=[grid_x.min(), grid_x.max(), grid_y.min(), grid_y.max()], 
-                        origin='lower', aspect='equal')
-        
-        # Adicionar barra de cores
-        norm = plt.Normalize(dem.min(), dem.max())
-        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-        sm.set_array([])  # Truque para evitar avisos
-        
-        # Adicionar a barra de cores usando a instância de figura atual
-        cbar = plt.colorbar(sm, ax=ax, label='Elevação (m)')
-        cbar.ax.tick_params(labelsize=8)
-        
-        ax.set_title('Modelo Digital de Terreno com Realce de Relevo')
-        ax.set_xlabel('Coordenada X (m)')
-        ax.set_ylabel('Coordenada Y (m)')
-        ax.grid(alpha=0.3)
-        plt.tight_layout()
-        plt.show()
-    
-    @staticmethod
-    def visualize_slope(dtm_data, cmap='viridis'):
-        """
-        Visualiza o mapa de declividade derivado do MDT.
-        """
-        import numpy as np
-        import matplotlib.pyplot as plt
-        
-        if dtm_data is None:
-            print("Dados do MDT inválidos.")
-            return
-        
-        # Extrair dados do dicionário
-        grid_x = dtm_data['grid_x']
-        grid_y = dtm_data['grid_y']
-        dem = dtm_data['dem']
-        resolution = dtm_data['resolution']
-        
-        # Calcular gradientes
-        dy, dx = np.gradient(dem, resolution, resolution)
-        
-        # Calcular declividade em graus
-        slope = np.degrees(np.arctan(np.sqrt(dx**2 + dy**2)))
-        
-        # Plotar mapa de declividade
-        fig, ax = plt.subplots(figsize=(12, 10))
-        
-        slope_img = ax.imshow(slope, cmap=cmap, 
-                             extent=[grid_x.min(), grid_x.max(), grid_y.min(), grid_y.max()], 
-                             origin='lower', aspect='equal')
-        
-        # Adicionar barra de cores
-        cbar = plt.colorbar(slope_img, ax=ax, label='Declividade (graus)')
-        cbar.ax.tick_params(labelsize=8)
-        
-        ax.set_title('Mapa de Declividade')
-        ax.set_xlabel('Coordenada X (m)')
-        ax.set_ylabel('Coordenada Y (m)')
-        ax.grid(alpha=0.3)
-        plt.tight_layout()
-        plt.show()
-    
-    @staticmethod
-    def segment_by_height(las_data, max_points=None):
-        """Segmenta a nuvem de pontos por faixas de altura."""
-        if las_data is None:
-            return None, None
-        
-        # Obter pontos (com limite para melhor desempenho)
-        points = LidarVisualization.get_points(las_data, max_points=max_points)
-        x, y, z = points[:, 0], points[:, 1], points[:, 2]
-        
-        # Definir faixas de altura relativa
-        # Calcular altura relativa acima do nível mínimo
-        z_min = np.min(z)
-        relative_height = z - z_min
-        
-        # Determinar faixas de altura automaticamente com base na distribuição
-        z_range = np.max(z) - z_min
-        
-        # Definir categorias de altura
-        height_thresholds = [0, 0.5, 2, 5, 10, 20, float('inf')]
-        height_categories = [
-            "Solo (0-0.5m)",
-            "Vegetação baixa (0.5-2m)",
-            "Arbustos (2-5m)",
-            "Árvores médias (5-10m)",
-            "Árvores altas (10-20m)",
-            "Muito alto (>20m)"
-        ]
-        
-        # Criar máscaras para cada faixa de altura
-        height_masks = []
-        for i in range(len(height_thresholds) - 1):
-            mask = (relative_height >= height_thresholds[i]) & (relative_height < height_thresholds[i + 1])
-            height_masks.append(mask)
-            count = np.sum(mask)
-            percentage = count / len(relative_height) * 100
-            print(f"{height_categories[i]}: {count:,} pontos ({percentage:.2f}%)")
-        
-        # Visualizar a distribuição de altura
-        plt.figure(figsize=(12, 6))
-        
-        # Histograma com faixas coloridas
-        colors = ['darkgreen', 'forestgreen', 'limegreen', 'goldenrod', 'darkorange', 'firebrick']
-        hist, bins = np.histogram(relative_height, bins=50)
-        
-        plt.hist(relative_height, bins=50, alpha=0.6, color='gray', label='Todos os pontos')
-        
-        # Adicionar histogramas por faixa
-        for i, mask in enumerate(height_masks):
-            if np.any(mask):
-                plt.hist(relative_height[mask], bins=50, alpha=0.7, color=colors[i], 
-                        label=height_categories[i])
-        
-        plt.legend()
-        plt.title('Distribuição de Alturas Relativas')
-        plt.xlabel('Altura relativa (m)')
-        plt.ylabel('Número de pontos')
-        plt.grid(True, alpha=0.3)
-        plt.show()
-        
-        # Visualizar espacialmente as faixas de altura
-        fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-        axes = axes.flatten()
-        
-        for i, (mask, category) in enumerate(zip(height_masks, height_categories)):
-            ax = axes[i]
-            if np.any(mask):
-                ax.scatter(x[mask], y[mask], s=0.1, alpha=0.5, color=colors[i])
-                ax.set_title(category)
-                ax.set_aspect('equal')
-                ax.grid(True, alpha=0.3)
-            else:
-                ax.set_title(f"{category} (nenhum ponto)")
-                ax.set_aspect('equal')
-                ax.grid(True, alpha=0.3)
-        
-        plt.tight_layout()
-        plt.show()
-        
-        return height_masks, height_categories
