@@ -1023,4 +1023,3 @@ class ContourGenerator:
         else:
             print("Failed to open raster dataset")
             return None
-``` 
