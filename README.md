@@ -18,7 +18,7 @@ Developed for spatial data scientists, geologists, civil engineers, and environm
   - Interactive 3D visualization via Plotly and Open3D
   - Color coding based on attributes (elevation, intensity, classification)
 
-![3D Visualization](https://github.com/erickfaria/LidarToolkit/raw/main/images/3DVisualization.png)
+![3D Visualization](https://github.com/erickfaria/LidarToolkit/raw/main/images/hexbinviewLidar.png)
 
 - **DTM (Digital Terrain Model) Generation**:
   - Multiple interpolation methods
