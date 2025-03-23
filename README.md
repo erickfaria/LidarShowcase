@@ -2,7 +2,7 @@
 
 ## A complete toolkit for LiDAR data processing, visualization, and analysis
 
-![LiDAR Banner](https://github.com/erickfaria/LidarShowcase/images/lidarToolkitBanner.jpg)
+![LiDAR Banner](https://github.com/erickfaria/LidarToolkit/raw/main/images/lidarToolkitBanner.jpg)
 
 ## Overview
 
