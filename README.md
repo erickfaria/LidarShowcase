@@ -18,14 +18,14 @@ Developed for spatial data scientists, geologists, civil engineers, and environm
   - Interactive 3D visualization via Plotly and Open3D
   - Color coding based on attributes (elevation, intensity, classification)
 
-![3D Visualization](https://github.com/erickfaria/LidarToolkit/images/3d_visualization.png)
+![3D Visualization](https://github.com/erickfaria/LidarToolkit/raw/main/images/3DVisualization.png)
 
 - **DTM (Digital Terrain Model) Generation**:
   - Multiple interpolation methods
   - Customizable resolution
   - Post-processing (gap filling, smoothing)
 
-![DTM Example](https://github.com/erickfaria/LidarToolkit/images/dtm_example.png)
+![DTM Example](https://github.com/erickfaria/LidarToolkit/raw/main/images/mdtInetrpolation.png)
 
 - **Terrain Analysis**:
   - Slope calculation
@@ -34,7 +34,7 @@ Developed for spatial data scientists, geologists, civil engineers, and environm
   - Curvature
   - Contour generation with customizable intervals
 
-![Terrain Analysis](https://github.com/erickfaria/LidarToolkit/images/terrain_analysis.png)
+![Terrain Analysis](https://github.com/erickfaria/LidarToolkit/raw/main/images/terrain_analysis.png)
 
 - **Data Export**:
   - Support for multiple formats (GeoTIFF, ASC, PNG, XYZ)
@@ -51,9 +51,7 @@ LidarToolkit/
 ├── data/                            # Folder for storing LiDAR files
 ├── processed_data/                  # Exported results
 ├── examples/                        # Demonstration Jupyter notebooks
-│   ├── lidarReadAndViewer.ipynb     # Visualization tutorial
-│   ├── createLidarMDT.ipynb         # DTM creation tutorial
-│   ├── download_sample.py           # Simple file download example
+│   │   ├── download_sample.py           # Simple file download example
 │   └── download_and_process.py      # Complete workflow example
 ├── assets/                          # Images and resources
 └── README.md                        # This document
@@ -90,14 +88,14 @@ pip install -r requirements.txt
    - Open the notebook `examples/lidarReadAndViewer.ipynb`
    - Follow the instructions to explore 2D/3D visualizations and attributes
 
-   ![Exploration Example](https://github.com/erickfaria/LidarToolkit/images/exploration_example.png)
+   ![Exploration Example](https://github.com/erickfaria/LidarToolkit/raw/main/images/topViewPointLidar.png)
 
 3. **Digital Terrain Model Generation**
    - Open the notebook `examples/createLidarMDT.ipynb`
    - Adjust parameters to create optimized DTMs
    - Explore derived analyses such as slope, aspect, and hillshade
 
-   ![DTM Example](https://github.com/erickfaria/LidarToolkit/images/dtm_workflow.png)
+   ![DTM Example](https://github.com/erickfaria/LidarToolkit/raw/main/images/mdtPostprocessed.png)
 
 ## Application Examples
 
@@ -105,19 +103,19 @@ pip install -r requirements.txt
 
 LidarToolkit enables the creation of detailed topographic maps from LiDAR data. Through DTM generation and contour lines, it's possible to obtain precise terrain representations.
 
-![Topographic Map](https://github.com/erickfaria/LidarToolkit/images/topographic_map.png)
+![Topographic Map](https://github.com/erickfaria/LidarToolkit/raw/main/images/Contourmap.png)
 
 ### Relief Analysis
 
 Using the terrain analysis features, you can identify important geomorphological characteristics such as steep slopes, plains, and drainage patterns.
 
-![Relief Analysis](https://github.com/erickfaria/LidarToolkit/images/relief_analysis.png)
+![Relief Analysis](https://github.com/erickfaria/LidarToolkit/raw/main/images/curvature.png)
 
 ### Advanced Visualization
 
 The 3D visualization tools allow you to interactively explore the point cloud, facilitating the identification of structures and patterns in LiDAR data.
 
-![Advanced Visualization](https://github.com/erickfaria/LidarToolkit/images/advanced_visualization.png)
+![Advanced Visualization](https://github.com/erickfaria/LidarToolkit/raw/main/images/3DVisualization.png)
 
 ## Technologies Used
 
