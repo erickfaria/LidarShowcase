@@ -24,3 +24,7 @@ data/
 
 # Logs
 *.log
+*.png
+*.asc
+*.tif
+*.xyz
