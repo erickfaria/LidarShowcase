@@ -1,73 +1,172 @@
-# LiDAR Showcase
+# LidarShowcase
 
-Este repositório contém exemplos e tutoriais para processamento de dados LiDAR (Light Detection and Ranging) utilizando Python.
+## A complete toolkit for LiDAR data processing, visualization, and analysis
 
-## Estrutura do Projeto
+![LiDAR Banner](https://github.com/erickfaria/LidarShowcase/images/banner_lidar.png)
 
-- `data/`: Diretório para armazenar arquivos LAS/LAZ
-- `processed_data/`: Diretório para armazenar resultados processados
-- `intro_lidar_notebook.ipynb`: Notebook introdutório com operações básicas em dados LiDAR
+## Overview
 
-## Configuração do Ambiente
+**LidarShowcase** is a Python toolkit for comprehensive processing of LiDAR (Light Detection and Ranging) data. This project offers a complete pipeline for working with 3D point clouds, from initial reading to digital terrain model generation and advanced surface analysis.
 
-### Requisitos
+Developed for spatial data scientists, geologists, civil engineers, and environmental researchers, LidarShowcase facilitates the extraction of valuable information from LiDAR datasets with a simple and intuitive interface implemented in Jupyter Notebooks.
+
+## Key Features
+
+- **Data Loading and Exploration**: Intuitive interface for selecting and loading LAS/LAZ files
+- **Advanced Visualization**:
+  - 2D rendering with density control
+  - Interactive 3D visualization via Plotly and Open3D
+  - Color coding based on attributes (elevation, intensity, classification)
+
+![3D Visualization](https://github.com/erickfaria/LidarShowcase/images/3d_visualization.png)
+
+- **DTM (Digital Terrain Model) Generation**:
+  - Multiple interpolation methods
+  - Customizable resolution
+  - Post-processing (gap filling, smoothing)
+
+![DTM Example](https://github.com/erickfaria/LidarShowcase/images/dtm_example.png)
+
+- **Terrain Analysis**:
+  - Slope calculation
+  - Aspect
+  - Hillshade
+  - Curvature
+  - Contour generation with customizable intervals
+
+![Terrain Analysis](https://github.com/erickfaria/LidarShowcase/images/terrain_analysis.png)
+
+- **Data Export**:
+  - Support for multiple formats (GeoTIFF, ASC, PNG, XYZ)
+  - Preserved metadata and georeferencing
+
+## Project Structure
+
+```
+LidarShowcase/
+├── lidar/                           # Main package
+│   ├── lidarReadAndViewer.py        # Data reading and visualization
+│   ├── lidarDTM.py                  # DTM generation and analysis
+│   └── ...
+├── data/                            # Folder for storing LiDAR files
+├── processed_data/                  # Exported results
+├── examples/                        # Demonstration Jupyter notebooks
+│   ├── lidarReadAndViewer.ipynb     # Visualization tutorial
+│   ├── createLidarMDT.ipynb         # DTM creation tutorial
+│   ├── download_sample.py           # Simple file download example
+│   └── download_and_process.py      # Complete workflow example
+├── assets/                          # Images and resources
+└── README.md                        # This document
+```
+
+## Requirements and Installation
+
+### Prerequisites
 
 - Python 3.7+
-- Dependências listadas em `requirements.txt`
+- Jupyter Notebook/Lab
 
-### Instalação
+### Installation
 
-1. Clone este repositório:
 ```bash
-git clone https://github.com/seu-usuario/LidarShowcase.git
+# Clone the repository
+git clone https://github.com/erickfaria/LidarShowcase.git
 cd LidarShowcase
-```
 
-2. Crie e ative um ambiente virtual:
-```bash
+# Set up virtual environment (recommended)
 python -m venv venv
-# No Windows
-venv\Scripts\activate
-# No Linux/Mac
-source venv/bin/activate
-```
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-3. Instale as dependências:
-```bash
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-## Uso
+## How to Use
 
-1. Coloque seus arquivos LAS/LAZ na pasta `data/`
-2. Execute o Jupyter Lab:
-```bash
-jupyter lab
-```
-3. Abra o notebook `intro_lidar_notebook.ipynb` para começar
+1. **Data Preparation**
+   - Place your LAS/LAZ files in the `data/` folder
 
-## Funcionalidades Demonstradas
+2. **Exploration and Visualization**
+   - Open the notebook `examples/lidarReadAndViewer.ipynb`
+   - Follow the instructions to explore 2D/3D visualizations and attributes
 
-- Leitura de arquivos LAS/LAZ
-- Visualização 2D e 3D de nuvens de pontos
-- Análise de atributos (elevação, intensidade, classificação)
-- Filtragem e segmentação de pontos
-- Criação de modelos digitais de terreno simplificados
-- Exportação de resultados processados
+   ![Exploration Example](https://github.com/erickfaria/LidarShowcase/images/exploration_example.png)
 
-## Recursos Adicionais
+3. **Digital Terrain Model Generation**
+   - Open the notebook `examples/createLidarMDT.ipynb`
+   - Adjust parameters to create optimized DTMs
+   - Explore derived analyses such as slope, aspect, and hillshade
 
-- [Documentação do laspy](https://laspy.readthedocs.io/)
-- [Documentação do Open3D](http://www.open3d.org/docs/)
-- [Padrão LAS](https://www.asprs.org/divisions-committees/lidar-division/laser-las-file-format-exchange-activities)
+   ![DTM Example](https://github.com/erickfaria/LidarShowcase/images/dtm_workflow.png)
 
-## Exemplos
+## Application Examples
 
-Veja a pasta `examples/` para exemplos de uso:
+### Topographic Mapping
 
-- `download_sample.py`: Exemplo simples de download de arquivo
-- `download_and_process.py`: Exemplo completo de fluxo de trabalho
+LidarShowcase enables the creation of detailed topographic maps from LiDAR data. Through DTM generation and contour lines, it's possible to obtain precise terrain representations.
 
-## Licença
+![Topographic Map](https://github.com/erickfaria/LidarShowcase/images/topographic_map.png)
 
-Este projeto está licenciado sob a licença MIT.
+### Relief Analysis
+
+Using the terrain analysis features, you can identify important geomorphological characteristics such as steep slopes, plains, and drainage patterns.
+
+![Relief Analysis](https://github.com/erickfaria/LidarShowcase/images/relief_analysis.png)
+
+### Advanced Visualization
+
+The 3D visualization tools allow you to interactively explore the point cloud, facilitating the identification of structures and patterns in LiDAR data.
+
+![Advanced Visualization](https://github.com/erickfaria/LidarShowcase/images/advanced_visualization.png)
+
+## Technologies Used
+
+- **LiDAR Processing**: laspy, pylas
+- **Spatial Analysis**: numpy, scipy
+- **Visualization**: matplotlib, plotly, Open3D
+- **Interactive Interface**: IPython, ipywidgets
+- **Geospatial Processing**: rasterio, gdal
+
+## Additional Resources
+
+- [laspy Documentation](https://laspy.readthedocs.io/)
+- [Open3D Documentation](http://www.open3d.org/docs/)
+- [LAS Standard](https://www.asprs.org/divisions-committees/lidar-division/laser-las-file-format-exchange-activities)
+
+## Roadmap
+
+Features planned for future versions:
+
+- Automatic classification of LiDAR points
+- Object detection and extraction (trees, buildings)
+- Comparison of multiple LiDAR datasets
+- Web interface for remote visualization and processing
+- Support for processing very large datasets (> 1 billion points)
+
+## Contributions
+
+Contributions are welcome! If you want to contribute to LidarShowcase:
+
+1. Fork the repository
+2. Create a branch for your feature (`git checkout -b feature/new-functionality`)
+3. Commit your changes (`git commit -m 'Adding new functionality'`)
+4. Push to the branch (`git push origin feature/new-functionality`)
+5. Open a Pull Request
+
+For issues, suggestions, or questions, please open an issue on GitHub.
+
+## License
+
+This project is licensed under the MIT License.
+
+## Contact
+
+Erick Faria - [GitHub](https://github.com/erickfaria)
+
+Project link: [https://github.com/erickfaria/LidarShowcase](https://github.com/erickfaria/LidarShowcase)
+
+---
+
+<p align="center">
+  <i>Developed with ❤️ for the geospatial community</i>
+</p>
