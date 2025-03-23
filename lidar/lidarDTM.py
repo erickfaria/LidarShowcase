@@ -11,12 +11,24 @@ import rasterio
 from rasterio.transform import from_origin
 import laspy
 import geopandas as gpd
-import pdal
 import json
-from osgeo import gdal
+from datetime import datetime
+
+# Importações condicionais
+try:
+    import pdal
+    PDAL_AVAILABLE = True
+except ImportError:
+    PDAL_AVAILABLE = False
+
+try:
+    from osgeo import gdal
+    GDAL_AVAILABLE = True
+except ImportError:
+    GDAL_AVAILABLE = False
+
 from skimage import filters, morphology
 from rasterio.plot import show
-from datetime import datetime
 
 
 class DTMGenerator:
@@ -220,6 +232,12 @@ class DTMGenerator:
         Returns:
             numpy.ndarray: The DTM raster data
         """
+        if not PDAL_AVAILABLE:
+            print("PDAL is not available. Please install it with:")
+            print("pip install python-pdal")
+            print("\nUsing alternative method (RBF interpolation) instead...")
+            return self.generate_rbf_dtm(function='thin_plate', smooth=0.1)
+        
         # Save ground points to temporary LAS file
         temp_dir = os.path.join(self.output_dir, "temp")
         if not os.path.exists(temp_dir):
@@ -930,6 +948,11 @@ class ContourGenerator:
         Returns:
             str: Output shapefile path
         """
+        if not GDAL_AVAILABLE:
+            print("GDAL is not available for contour generation to shapefile.")
+            print("Please install GDAL with: pip install GDAL")
+            return None
+            
         # Extract data
         grid_x = dtm['grid_x']
         grid_y = dtm['grid_y']
@@ -1000,3 +1023,4 @@ class ContourGenerator:
         else:
             print("Failed to open raster dataset")
             return None
+``` 
