@@ -443,10 +443,10 @@ class LidarProcessing:
             return None, None
     
     @staticmethod
-    def create_simple_dtm(las_data, resolution=1.0):
-        """Cria um modelo digital de terreno (MDT) simples."""
+    def create_simple_dtm(las_data, resolution=1.0, fill_gaps=False):
+        """Cria um modelo digital de terreno (MDT) simples e rápido."""
         if las_data is None:
-            return
+            return None
         
         # Usar pontos de solo se disponíveis, caso contrário usar todos os pontos
         if hasattr(las_data, 'classification') and 2 in np.unique(las_data.classification):
@@ -461,44 +461,66 @@ class LidarProcessing:
             z = las_data.z
             print("Criando MDT a partir de todos os pontos (sem filtragem por classe).")
         
+        # Verificar se há pontos suficientes
+        if len(x) < 3:
+            print("Não há pontos suficientes para criar um MDT.")
+            return None
+        
         # Calcular os limites da grade
         x_min, x_max = np.min(x), np.max(x)
         y_min, y_max = np.min(y), np.max(y)
         
         # Criar grade
-        x_grid = np.arange(x_min, x_max, resolution)
-        y_grid = np.arange(y_min, y_max, resolution)
-        xx, yy = np.meshgrid(x_grid, y_grid)
+        x_grid = np.arange(x_min, x_max + resolution, resolution)
+        y_grid = np.arange(y_min, y_max + resolution, resolution)
+        
+        # Para melhorar a performance, reduzir o número de operações
+        # Usar método rápido de binning para criar o MDT
+        num_x_cells = len(x_grid) - 1
+        num_y_cells = len(y_grid) - 1
         
         # Inicializar grade de elevação com NaN
-        elevation_grid = np.full(xx.shape, np.nan)
+        elevation_grid = np.full((num_y_cells, num_x_cells), np.nan)
         
-        # Preencher grade - abordagem simplificada usando bins 2D
-        x_bins = np.searchsorted(x_grid, x) - 1
-        y_bins = np.searchsorted(y_grid, y) - 1
+        # Converter coordenadas para índices de células
+        x_indices = np.clip(np.floor((x - x_min) / resolution).astype(int), 0, num_x_cells - 1)
+        y_indices = np.clip(np.floor((y - y_min) / resolution).astype(int), 0, num_y_cells - 1)
         
-        # Filtrar índices fora dos limites
-        valid_idx = (x_bins >= 0) & (y_bins >= 0) & (x_bins < len(x_grid)) & (y_bins < len(y_grid))
-        x_bins = x_bins[valid_idx]
-        y_bins = y_bins[valid_idx]
-        z_vals = z[valid_idx]
+        # Para cada ponto, atualizar a célula correspondente com a elevação mínima
+        for i in range(len(x)):
+            xi, yi = x_indices[i], y_indices[i]
+            current_z = elevation_grid[yi, xi]
+            
+            if np.isnan(current_z) or z[i] < current_z:
+                elevation_grid[yi, xi] = z[i]
         
-        # Para cada célula da grade, encontrar o ponto com menor Z (simplificação do MDT)
-        for i in range(len(x_grid)):
-            for j in range(len(y_grid)):
-                cell_points = (x_bins == i) & (y_bins == j)
-                if np.any(cell_points):
-                    elevation_grid[j, i] = np.min(z_vals[cell_points])  # Use mínimo para MDT
+        # Opcionalmente, preencher buracos (células vazias)
+        if fill_gaps and np.any(np.isnan(elevation_grid)):
+            from scipy import ndimage
+            print("Preenchendo células vazias...")
+            # Criar uma máscara para identificar células vazias
+            mask = np.isnan(elevation_grid)
+            # Preencher células vazias com a média dos vizinhos
+            elevation_grid = ndimage.gaussian_filter(np.nan_to_num(elevation_grid), sigma=1)
+            # Aplicar a máscara para manter apenas os valores originais onde já havia dados
+            elevation_grid[~mask] = np.nan_to_num(elevation_grid)[~mask]
+        
+        # Criar meshgrid para visualização
+        xx, yy = np.meshgrid(x_grid[:-1] + resolution/2, y_grid[:-1] + resolution/2)
         
         # Retornar os dados do MDT para visualização
-        return {
-            'elevation_grid': elevation_grid,
-            'x_grid': x_grid,
-            'y_grid': y_grid,
+        dtm_data = {
+            'dem': elevation_grid,
+            'grid_x': x_grid[:-1] + resolution/2,
+            'grid_y': y_grid[:-1] + resolution/2,
             'xx': xx,
             'yy': yy,
-            'extent': [x_min, x_max, y_min, y_max]
+            'resolution': resolution,
+            'bounds': (x_min, x_max, y_min, y_max)
         }
+        
+        print(f"MDT criado com {num_x_cells}x{num_y_cells} células.")
+        return dtm_data
     
     @staticmethod
     def create_interpolated_dtm(las_data, resolution=1.0, method='linear'):
@@ -511,11 +533,7 @@ class LidarProcessing:
             method (str): Método de interpolação ('linear', 'cubic', 'nearest')
         
         Retorna:
-            dict: Dicionário contendo os dados do MDT, incluindo:
-                - grid_x, grid_y: Coordenadas da grade
-                - dem: Matriz de elevação
-                - resolution: Resolução usada
-                - bounds: Limites da área
+            dict: Dicionário contendo os dados do MDT
         """
         import numpy as np
         from scipy.interpolate import griddata
@@ -537,7 +555,19 @@ class LidarProcessing:
         
         # Verificar se há pontos suficientes
         if len(x) < 3:
-            raise ValueError("Não há pontos suficientes para criar um MDT.")
+            print("Não há pontos suficientes para criar um MDT.")
+            return None
+
+        # Para melhorar a performance, reduzir a amostragem de pontos
+        # Se tiver mais de 1 milhão de pontos, amostrar para melhorar performance
+        if len(x) > 1000000:
+            # Amostrar 10% dos pontos ou no máximo 500.000, o que for maior
+            sample_size = max(int(len(x) * 0.1), 500000)
+            idx = np.random.choice(len(x), sample_size, replace=False)
+            x = x[idx]
+            y = y[idx]
+            z = z[idx]
+            print(f"Usando amostragem de {sample_size:,} pontos para melhorar performance.")
         
         # Calcular limites da área
         x_min, x_max = np.min(x), np.max(x)
@@ -548,69 +578,60 @@ class LidarProcessing:
         grid_y = np.arange(y_min, y_max + resolution, resolution)
         mesh_x, mesh_y = np.meshgrid(grid_x, grid_y)
         
+        print(f"Interpolando MDT com método {method}...")
+        
         # Realizar interpolação
         points = np.column_stack((x, y))
         grid_z = griddata(points, z, (mesh_x, mesh_y), method=method)
         
         # Preencher valores nulos (pode ocorrer com cubic)
-        if method == 'cubic':
+        if np.any(np.isnan(grid_z)):
+            print("Preenchendo valores nulos...")
             mask = np.isnan(grid_z)
-            if np.any(mask):
-                grid_z[mask] = griddata(points, z, (mesh_x[mask], mesh_y[mask]), method='nearest')
+            grid_z[mask] = griddata(points, z, (mesh_x[mask], mesh_y[mask]), method='nearest')
         
         # Criar dicionário de saída com os dados processados
         dtm_data = {
+            'dem': grid_z,
             'grid_x': grid_x,
             'grid_y': grid_y,
-            'dem': grid_z,
+            'xx': mesh_x,
+            'yy': mesh_y,
             'resolution': resolution,
             'bounds': (x_min, x_max, y_min, y_max)
         }
         
+        print(f"MDT criado com {len(grid_x)}x{len(grid_y)} células.")
         return dtm_data
     
     @staticmethod
-    def visualize_enhanced_dtm(dtm_data, cmap='terrain', alpha=0.8):
+    def visualize_dtm(dtm_data, cmap='terrain', title='Modelo Digital de Terreno'):
         """
-        Visualiza um MDT com realce de relevo (hillshade).
-        
-        Parâmetros:
-            dtm_data (dict): Dicionário contendo os dados do MDT
-            cmap (str): Mapa de cores para visualização
-            alpha (float): Transparência do MDT sobre o hillshade
+        Visualiza um MDT simples.
         """
         import numpy as np
         import matplotlib.pyplot as plt
-        from matplotlib.colors import LightSource
+        
+        if dtm_data is None:
+            print("Dados do MDT inválidos.")
+            return
         
         # Extrair dados do dicionário
+        dem = dtm_data['dem']
         grid_x = dtm_data['grid_x']
         grid_y = dtm_data['grid_y']
-        dem = dtm_data['dem']
         
         # Configurar figura
-        plt.figure(figsize=(12, 10))
+        plt.figure(figsize=(10, 8))
         
-        # Criar fonte de luz para hillshade
-        ls = LightSource(azdeg=315, altdeg=45)
-        
-        # Usar o método shade diretamente, que lida com todas as conversões internas
-        # Este método integra corretamente o hillshade com os dados coloridos
-        rgb = ls.shade(dem, cmap=plt.get_cmap(cmap), blend_mode='overlay', 
-                      vert_exag=3, dx=dtm_data['resolution'], dy=dtm_data['resolution'])
-        
-        # Renderizar a imagem
-        plt.imshow(rgb, extent=[grid_x.min(), grid_x.max(), grid_y.min(), grid_y.max()], 
-                  origin='lower', aspect='equal')
+        # Plotar o MDT
+        img = plt.imshow(dem, extent=[grid_x.min(), grid_x.max(), grid_y.min(), grid_y.max()],
+                        origin='lower', cmap=cmap, aspect='equal')
         
         # Adicionar barra de cores
-        norm = plt.Normalize(dem.min(), dem.max())
-        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-        sm.set_array([])  # Truque para evitar avisos
-        cbar = plt.colorbar(sm, label='Elevação (m)')
-        cbar.ax.tick_params(labelsize=8)
+        plt.colorbar(img, label='Elevação (m)')
         
-        plt.title('Modelo Digital de Terreno com Realce de Relevo')
+        plt.title(title)
         plt.xlabel('Coordenada X (m)')
         plt.ylabel('Coordenada Y (m)')
         plt.grid(alpha=0.3)
@@ -618,16 +639,66 @@ class LidarProcessing:
         plt.show()
     
     @staticmethod
-    def visualize_slope(dtm_data, cmap='viridis'):
+    def visualize_enhanced_dtm(dtm_data, cmap='terrain', alpha=0.8):
         """
-        Visualiza o mapa de declividade derivado do MDT.
-        
-        Parâmetros:
-            dtm_data (dict): Dicionário contendo os dados do MDT
-            cmap (str): Mapa de cores para visualização
+        Visualiza um MDT com realce de relevo (hillshade).
         """
         import numpy as np
         import matplotlib.pyplot as plt
+        from matplotlib.colors import LightSource
+        
+        if dtm_data is None:
+            print("Dados do MDT inválidos.")
+            return
+        
+        # Extrair dados do dicionário
+        grid_x = dtm_data['grid_x']
+        grid_y = dtm_data['grid_y']
+        dem = dtm_data['dem']
+        
+        # Configurar figura
+        fig, ax = plt.subplots(figsize=(12, 10))
+        
+        # Criar fonte de luz para hillshade
+        ls = LightSource(azdeg=315, altdeg=45)
+        
+        # Calcular hillshade
+        hillshade = ls.hillshade(dem, vert_exag=3, dx=dtm_data['resolution'], dy=dtm_data['resolution'])
+        
+        # Criar imagem colorida do MDT
+        rgb = ls.blend_overlay(hillshade, dem, cmap=plt.get_cmap(cmap))
+        
+        # Renderizar a imagem
+        img = ax.imshow(rgb, extent=[grid_x.min(), grid_x.max(), grid_y.min(), grid_y.max()], 
+                        origin='lower', aspect='equal')
+        
+        # Adicionar barra de cores
+        norm = plt.Normalize(dem.min(), dem.max())
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])  # Truque para evitar avisos
+        
+        # Adicionar a barra de cores usando a instância de figura atual
+        cbar = plt.colorbar(sm, ax=ax, label='Elevação (m)')
+        cbar.ax.tick_params(labelsize=8)
+        
+        ax.set_title('Modelo Digital de Terreno com Realce de Relevo')
+        ax.set_xlabel('Coordenada X (m)')
+        ax.set_ylabel('Coordenada Y (m)')
+        ax.grid(alpha=0.3)
+        plt.tight_layout()
+        plt.show()
+    
+    @staticmethod
+    def visualize_slope(dtm_data, cmap='viridis'):
+        """
+        Visualiza o mapa de declividade derivado do MDT.
+        """
+        import numpy as np
+        import matplotlib.pyplot as plt
+        
+        if dtm_data is None:
+            print("Dados do MDT inválidos.")
+            return
         
         # Extrair dados do dicionário
         grid_x = dtm_data['grid_x']
@@ -642,18 +713,100 @@ class LidarProcessing:
         slope = np.degrees(np.arctan(np.sqrt(dx**2 + dy**2)))
         
         # Plotar mapa de declividade
-        plt.figure(figsize=(12, 10))
-        slope_img = plt.imshow(slope, cmap=cmap, extent=[grid_x.min(), grid_x.max(), 
-                                                        grid_y.min(), grid_y.max()], 
-                              origin='lower', aspect='equal')
+        fig, ax = plt.subplots(figsize=(12, 10))
+        
+        slope_img = ax.imshow(slope, cmap=cmap, 
+                             extent=[grid_x.min(), grid_x.max(), grid_y.min(), grid_y.max()], 
+                             origin='lower', aspect='equal')
         
         # Adicionar barra de cores
-        cbar = plt.colorbar(slope_img, label='Declividade (graus)')
+        cbar = plt.colorbar(slope_img, ax=ax, label='Declividade (graus)')
         cbar.ax.tick_params(labelsize=8)
         
-        plt.title('Mapa de Declividade')
-        plt.xlabel('Coordenada X (m)')
-        plt.ylabel('Coordenada Y (m)')
-        plt.grid(alpha=0.3)
+        ax.set_title('Mapa de Declividade')
+        ax.set_xlabel('Coordenada X (m)')
+        ax.set_ylabel('Coordenada Y (m)')
+        ax.grid(alpha=0.3)
         plt.tight_layout()
         plt.show()
+    
+    @staticmethod
+    def segment_by_height(las_data, max_points=None):
+        """Segmenta a nuvem de pontos por faixas de altura."""
+        if las_data is None:
+            return None, None
+        
+        # Obter pontos (com limite para melhor desempenho)
+        points = LidarVisualization.get_points(las_data, max_points=max_points)
+        x, y, z = points[:, 0], points[:, 1], points[:, 2]
+        
+        # Definir faixas de altura relativa
+        # Calcular altura relativa acima do nível mínimo
+        z_min = np.min(z)
+        relative_height = z - z_min
+        
+        # Determinar faixas de altura automaticamente com base na distribuição
+        z_range = np.max(z) - z_min
+        
+        # Definir categorias de altura
+        height_thresholds = [0, 0.5, 2, 5, 10, 20, float('inf')]
+        height_categories = [
+            "Solo (0-0.5m)",
+            "Vegetação baixa (0.5-2m)",
+            "Arbustos (2-5m)",
+            "Árvores médias (5-10m)",
+            "Árvores altas (10-20m)",
+            "Muito alto (>20m)"
+        ]
+        
+        # Criar máscaras para cada faixa de altura
+        height_masks = []
+        for i in range(len(height_thresholds) - 1):
+            mask = (relative_height >= height_thresholds[i]) & (relative_height < height_thresholds[i + 1])
+            height_masks.append(mask)
+            count = np.sum(mask)
+            percentage = count / len(relative_height) * 100
+            print(f"{height_categories[i]}: {count:,} pontos ({percentage:.2f}%)")
+        
+        # Visualizar a distribuição de altura
+        plt.figure(figsize=(12, 6))
+        
+        # Histograma com faixas coloridas
+        colors = ['darkgreen', 'forestgreen', 'limegreen', 'goldenrod', 'darkorange', 'firebrick']
+        hist, bins = np.histogram(relative_height, bins=50)
+        
+        plt.hist(relative_height, bins=50, alpha=0.6, color='gray', label='Todos os pontos')
+        
+        # Adicionar histogramas por faixa
+        for i, mask in enumerate(height_masks):
+            if np.any(mask):
+                plt.hist(relative_height[mask], bins=50, alpha=0.7, color=colors[i], 
+                        label=height_categories[i])
+        
+        plt.legend()
+        plt.title('Distribuição de Alturas Relativas')
+        plt.xlabel('Altura relativa (m)')
+        plt.ylabel('Número de pontos')
+        plt.grid(True, alpha=0.3)
+        plt.show()
+        
+        # Visualizar espacialmente as faixas de altura
+        fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+        axes = axes.flatten()
+        
+        for i, (mask, category) in enumerate(zip(height_masks, height_categories)):
+            ax = axes[i]
+            if np.any(mask):
+                ax.scatter(x[mask], y[mask], s=0.1, alpha=0.5, color=colors[i])
+                ax.set_title(category)
+                ax.set_aspect('equal')
+                ax.grid(True, alpha=0.3)
+            else:
+                ax.set_title(f"{category} (nenhum ponto)")
+                ax.set_aspect('equal')
+                ax.grid(True, alpha=0.3)
+        
+        plt.tight_layout()
+        plt.show()
+        
+        return height_masks, height_categories
