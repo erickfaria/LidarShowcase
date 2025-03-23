@@ -1,172 +1,172 @@
 # LidarShowcase
 
-## Um toolkit completo para processamento, visualização e análise de dados LiDAR
+## A complete toolkit for LiDAR data processing, visualization, and analysis
 
-![Banner LiDAR](https://github.com/erickfaria/LidarShowcase/raw/main/assets/banner_lidar.png)
+![LiDAR Banner](https://github.com/erickfaria/LidarShowcase/images/banner_lidar.png)
 
-## Visão Geral
+## Overview
 
-**LidarShowcase** é uma suíte de ferramentas Python para o processamento abrangente de dados LiDAR (Light Detection and Ranging). Este projeto oferece uma pipeline completa para trabalhar com nuvens de pontos 3D, desde a leitura inicial até a geração de modelos digitais de terreno e análises avançadas de superfície.
+**LidarShowcase** is a Python toolkit for comprehensive processing of LiDAR (Light Detection and Ranging) data. This project offers a complete pipeline for working with 3D point clouds, from initial reading to digital terrain model generation and advanced surface analysis.
 
-Desenvolvido para cientistas de dados espaciais, geólogos, engenheiros civis e pesquisadores ambientais, o LidarShowcase facilita a extração de informações valiosas de conjuntos de dados LiDAR com uma interface simples e intuitiva implementada em Jupyter Notebooks.
+Developed for spatial data scientists, geologists, civil engineers, and environmental researchers, LidarShowcase facilitates the extraction of valuable information from LiDAR datasets with a simple and intuitive interface implemented in Jupyter Notebooks.
 
-## Características Principais
+## Key Features
 
-- **Carregamento e Exploração de Dados**: Interface intuitiva para seleção e carregamento de arquivos LAS/LAZ
-- **Visualização Avançada**:
-  - Renderização 2D com controle de densidade
-  - Visualização 3D interativa via Plotly e Open3D
-  - Codificação por cores baseada em atributos (elevação, intensidade, classificação)
+- **Data Loading and Exploration**: Intuitive interface for selecting and loading LAS/LAZ files
+- **Advanced Visualization**:
+  - 2D rendering with density control
+  - Interactive 3D visualization via Plotly and Open3D
+  - Color coding based on attributes (elevation, intensity, classification)
 
-![Visualização 3D](https://github.com/erickfaria/LidarShowcase/raw/main/assets/3d_visualization.png)
+![3D Visualization](https://github.com/erickfaria/LidarShowcase/images/3d_visualization.png)
 
-- **Geração de MDT (Modelo Digital de Terreno)**:
-  - Múltiplos métodos de interpolação
-  - Resolução personalizável
-  - Pós-processamento (preenchimento de lacunas, suavização)
+- **DTM (Digital Terrain Model) Generation**:
+  - Multiple interpolation methods
+  - Customizable resolution
+  - Post-processing (gap filling, smoothing)
 
-![MDT Exemplo](https://github.com/erickfaria/LidarShowcase/raw/main/assets/dtm_example.png)
+![DTM Example](https://github.com/erickfaria/LidarShowcase/images/dtm_example.png)
 
-- **Análise de Terreno**:
-  - Cálculo de inclinação (slope)
-  - Aspecto (aspect)
-  - Hillshade (sombreamento)
-  - Curvatura
-  - Geração de curvas de nível com intervalos personalizáveis
+- **Terrain Analysis**:
+  - Slope calculation
+  - Aspect
+  - Hillshade
+  - Curvature
+  - Contour generation with customizable intervals
 
-![Análise de Terreno](https://github.com/erickfaria/LidarShowcase/raw/main/assets/terrain_analysis.png)
+![Terrain Analysis](https://github.com/erickfaria/LidarShowcase/images/terrain_analysis.png)
 
-- **Exportação de Dados**:
-  - Suporte a múltiplos formatos (GeoTIFF, ASC, PNG, XYZ)
-  - Metadados e georreferenciamento preservados
+- **Data Export**:
+  - Support for multiple formats (GeoTIFF, ASC, PNG, XYZ)
+  - Preserved metadata and georeferencing
 
-## Estrutura do Projeto
+## Project Structure
 
 ```
 LidarShowcase/
-├── lidar/                           # Pacote principal
-│   ├── lidarReadAndViewer.py        # Leitura e visualização de dados
-│   ├── lidarDTM.py                  # Geração e análise de MDT
+├── lidar/                           # Main package
+│   ├── lidarReadAndViewer.py        # Data reading and visualization
+│   ├── lidarDTM.py                  # DTM generation and analysis
 │   └── ...
-├── data/                            # Pasta para armazenar arquivos LiDAR
-├── processed_data/                  # Resultados exportados
-├── examples/                        # Jupyter notebooks de demonstração
-│   ├── lidarReadAndViewer.ipynb     # Tutorial de visualização
-│   ├── createLidarMDT.ipynb         # Tutorial de criação de MDT
-│   ├── download_sample.py           # Exemplo simples de download de arquivo
-│   └── download_and_process.py      # Exemplo completo de fluxo de trabalho
-├── assets/                          # Imagens e recursos
-└── README.md                        # Este documento
+├── data/                            # Folder for storing LiDAR files
+├── processed_data/                  # Exported results
+├── examples/                        # Demonstration Jupyter notebooks
+│   ├── lidarReadAndViewer.ipynb     # Visualization tutorial
+│   ├── createLidarMDT.ipynb         # DTM creation tutorial
+│   ├── download_sample.py           # Simple file download example
+│   └── download_and_process.py      # Complete workflow example
+├── assets/                          # Images and resources
+└── README.md                        # This document
 ```
 
-## Requisitos e Instalação
+## Requirements and Installation
 
-### Pré-requisitos
+### Prerequisites
 
 - Python 3.7+
 - Jupyter Notebook/Lab
 
-### Instalação
+### Installation
 
 ```bash
-# Clonar o repositório
+# Clone the repository
 git clone https://github.com/erickfaria/LidarShowcase.git
 cd LidarShowcase
 
-# Configurar ambiente virtual (recomendado)
+# Set up virtual environment (recommended)
 python -m venv venv
-source venv/bin/activate  # No Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Instalar dependências
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-## Como Usar
+## How to Use
 
-1. **Preparação de Dados**
-   - Coloque seus arquivos LAS/LAZ na pasta `data/`
+1. **Data Preparation**
+   - Place your LAS/LAZ files in the `data/` folder
 
-2. **Exploração e Visualização**
-   - Abra o notebook `examples/lidarReadAndViewer.ipynb`
-   - Siga as instruções para explorar visualizações 2D/3D e atributos
+2. **Exploration and Visualization**
+   - Open the notebook `examples/lidarReadAndViewer.ipynb`
+   - Follow the instructions to explore 2D/3D visualizations and attributes
 
-   ![Exemplo de Exploração](https://github.com/erickfaria/LidarShowcase/raw/main/assets/exploration_example.png)
+   ![Exploration Example](https://github.com/erickfaria/LidarShowcase/images/exploration_example.png)
 
-3. **Geração de Modelo Digital de Terreno**
-   - Abra o notebook `examples/createLidarMDT.ipynb`
-   - Ajuste parâmetros para criar MDTs otimizados
-   - Explore análises derivadas como slope, aspect e hillshade
+3. **Digital Terrain Model Generation**
+   - Open the notebook `examples/createLidarMDT.ipynb`
+   - Adjust parameters to create optimized DTMs
+   - Explore derived analyses such as slope, aspect, and hillshade
 
-   ![Exemplo de MDT](https://github.com/erickfaria/LidarShowcase/raw/main/assets/dtm_workflow.png)
+   ![DTM Example](https://github.com/erickfaria/LidarShowcase/images/dtm_workflow.png)
 
-## Exemplos de Aplicação
+## Application Examples
 
-### Mapeamento Topográfico
+### Topographic Mapping
 
-O LidarShowcase permite criar mapas topográficos detalhados a partir de dados LiDAR. Através da geração de MDT e curvas de nível, é possível obter representações precisas do terreno.
+LidarShowcase enables the creation of detailed topographic maps from LiDAR data. Through DTM generation and contour lines, it's possible to obtain precise terrain representations.
 
-![Mapa Topográfico](https://github.com/erickfaria/LidarShowcase/raw/main/assets/topographic_map.png)
+![Topographic Map](https://github.com/erickfaria/LidarShowcase/images/topographic_map.png)
 
-### Análise de Relevo
+### Relief Analysis
 
-Utilizando as funcionalidades de análise de terreno, é possível identificar características geomorfológicas importantes como declives acentuados, planícies e padrões de drenagem.
+Using the terrain analysis features, you can identify important geomorphological characteristics such as steep slopes, plains, and drainage patterns.
 
-![Análise de Relevo](https://github.com/erickfaria/LidarShowcase/raw/main/assets/relief_analysis.png)
+![Relief Analysis](https://github.com/erickfaria/LidarShowcase/images/relief_analysis.png)
 
-### Visualização Avançada
+### Advanced Visualization
 
-As ferramentas de visualização 3D permitem explorar interativamente a nuvem de pontos, facilitando a identificação de estruturas e padrões nos dados LiDAR.
+The 3D visualization tools allow you to interactively explore the point cloud, facilitating the identification of structures and patterns in LiDAR data.
 
-![Visualização Avançada](https://github.com/erickfaria/LidarShowcase/raw/main/assets/advanced_visualization.png)
+![Advanced Visualization](https://github.com/erickfaria/LidarShowcase/images/advanced_visualization.png)
 
-## Tecnologias Utilizadas
+## Technologies Used
 
-- **Processamento LiDAR**: laspy, pylas
-- **Análise Espacial**: numpy, scipy
-- **Visualização**: matplotlib, plotly, Open3D
-- **Interface Interativa**: IPython, ipywidgets
-- **Processamento Geoespacial**: rasterio, gdal
+- **LiDAR Processing**: laspy, pylas
+- **Spatial Analysis**: numpy, scipy
+- **Visualization**: matplotlib, plotly, Open3D
+- **Interactive Interface**: IPython, ipywidgets
+- **Geospatial Processing**: rasterio, gdal
 
-## Recursos Adicionais
+## Additional Resources
 
-- [Documentação do laspy](https://laspy.readthedocs.io/)
-- [Documentação do Open3D](http://www.open3d.org/docs/)
-- [Padrão LAS](https://www.asprs.org/divisions-committees/lidar-division/laser-las-file-format-exchange-activities)
+- [laspy Documentation](https://laspy.readthedocs.io/)
+- [Open3D Documentation](http://www.open3d.org/docs/)
+- [LAS Standard](https://www.asprs.org/divisions-committees/lidar-division/laser-las-file-format-exchange-activities)
 
 ## Roadmap
 
-Funcionalidades planejadas para futuras versões:
+Features planned for future versions:
 
-- Classificação automática de pontos LiDAR
-- Detecção e extração de objetos (árvores, edificações)
-- Comparação de múltiplos conjuntos de dados LiDAR
-- Interface web para visualização e processamento remoto
-- Suporte para processar datasets muito grandes (> 1 bilhão de pontos)
+- Automatic classification of LiDAR points
+- Object detection and extraction (trees, buildings)
+- Comparison of multiple LiDAR datasets
+- Web interface for remote visualization and processing
+- Support for processing very large datasets (> 1 billion points)
 
-## Contribuições
+## Contributions
 
-Contribuições são bem-vindas! Se você deseja contribuir para o LidarShowcase:
+Contributions are welcome! If you want to contribute to LidarShowcase:
 
-1. Faça um fork do repositório
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-funcionalidade`)
-3. Commit suas mudanças (`git commit -m 'Adicionando nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/nova-funcionalidade`)
-5. Abra um Pull Request
+1. Fork the repository
+2. Create a branch for your feature (`git checkout -b feature/new-functionality`)
+3. Commit your changes (`git commit -m 'Adding new functionality'`)
+4. Push to the branch (`git push origin feature/new-functionality`)
+5. Open a Pull Request
 
-Para problemas, sugestões ou dúvidas, por favor abra uma issue no GitHub.
+For issues, suggestions, or questions, please open an issue on GitHub.
 
-## Licença
+## License
 
-Este projeto está licenciado sob a licença MIT.
+This project is licensed under the MIT License.
 
-## Contato
+## Contact
 
 Erick Faria - [GitHub](https://github.com/erickfaria)
 
-Link do projeto: [https://github.com/erickfaria/LidarShowcase](https://github.com/erickfaria/LidarShowcase)
+Project link: [https://github.com/erickfaria/LidarShowcase](https://github.com/erickfaria/LidarShowcase)
 
 ---
 
 <p align="center">
-  <i>Desenvolvido com ❤️ para a comunidade geoespacial</i>
+  <i>Developed with ❤️ for the geospatial community</i>
 </p>
