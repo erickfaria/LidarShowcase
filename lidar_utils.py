@@ -582,38 +582,30 @@ class LidarProcessing:
         import numpy as np
         import matplotlib.pyplot as plt
         from matplotlib.colors import LightSource
-        import matplotlib.cm as cm
         
         # Extrair dados do dicionário
         grid_x = dtm_data['grid_x']
         grid_y = dtm_data['grid_y']
         dem = dtm_data['dem']
         
-        # Criar fonte de luz para hillshade
-        ls = LightSource(azdeg=315, altdeg=45)
-        
-        # Calcular hillshade
-        hillshade = ls.hillshade(dem, vert_exag=3)
-        
         # Configurar figura
         plt.figure(figsize=(12, 10))
         
-        # Obter o mapa de cores e normalizar os dados
-        cmap_obj = cm.get_cmap(cmap)
-        norm = plt.Normalize(dem.min(), dem.max())
+        # Criar fonte de luz para hillshade
+        ls = LightSource(azdeg=315, altdeg=45)
         
-        # Colorir o MDT usando o mapa de cores - apenas usar os canais RGB (sem alpha)
-        rgb = cmap_obj(norm(dem))[:,:,:3]  # Remover o canal alpha (4º canal)
-        
-        # Aplicar o blend_overlay usando os dados já coloridos (agora com dimensões compatíveis)
-        shaded_rgb = ls.blend_overlay(hillshade, rgb)
+        # Usar o método shade diretamente, que lida com todas as conversões internas
+        # Este método integra corretamente o hillshade com os dados coloridos
+        rgb = ls.shade(dem, cmap=plt.get_cmap(cmap), blend_mode='overlay', 
+                      vert_exag=3, dx=dtm_data['resolution'], dy=dtm_data['resolution'])
         
         # Renderizar a imagem
-        plt.imshow(shaded_rgb, extent=[grid_x.min(), grid_x.max(), grid_y.min(), grid_y.max()], 
-                origin='lower', aspect='equal')
+        plt.imshow(rgb, extent=[grid_x.min(), grid_x.max(), grid_y.min(), grid_y.max()], 
+                  origin='lower', aspect='equal')
         
         # Adicionar barra de cores
-        sm = plt.cm.ScalarMappable(cmap=cmap_obj, norm=norm)
+        norm = plt.Normalize(dem.min(), dem.max())
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])  # Truque para evitar avisos
         cbar = plt.colorbar(sm, label='Elevação (m)')
         cbar.ax.tick_params(labelsize=8)
